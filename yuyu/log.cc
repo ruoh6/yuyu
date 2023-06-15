@@ -1,12 +1,13 @@
 #include "log.h"
 #include <map>
+#include <time.h>
 namespace yuyu {
 
 const char* LogLevel::ToString(LogLevel::Level level) {
     switch(level) {
 #define XX(name) \
         case LogLevel::name: \
-            return "name"; \
+            return #name; \
             break;
         XX(DEBUG);
         XX(INFO);
@@ -70,11 +71,19 @@ public:
 
 class DataTimeFormatItem : public LogFormatter::FormatItem {
 public:
-    DataTimeFormatItem(const std::string& format = "%Y:%m:%d %H:%M:%S")
+    DataTimeFormatItem(const std::string& format = "%Y-%m-%d %H:%M:%S")
         :m_format(format) {
+        if (m_format.empty()) {
+            m_format = "%Y-%m-%d %H:%M:%S";
+        }
     }
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
-        os << event->getTime();
+        struct tm tm;
+        time_t time = event->getTime();
+        localtime_r(&time, &tm);
+        char buff[64];
+        strftime(buff, sizeof(buff), m_format.c_str(), &tm);
+        os << buff;
     }
 private:
     std::string m_format;
@@ -116,12 +125,24 @@ private:
     std::string m_string;
 };
 
+LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time) 
+    :m_file(file)
+    ,m_line(line)
+    ,m_elapse(elapse)
+    ,m_threadId(thread_id)
+    ,m_fiberId(fiber_id)
+    ,m_time(time){
+}
 Logger::Logger(const std::string& name) 
-    :m_name(name) {
-
+    :m_name(name) 
+    ,m_level(LogLevel::Level::DEBUG){
+    m_formatter.reset(new LogFormatter("%d [%p] <%f:%l> %m %n"));
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {
+    if (!appender->getFormatter()) {
+        appender->setFormatter(m_formatter);
+    }
     m_appenders.push_back(appender);
 }
 
@@ -190,6 +211,7 @@ void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent:
 
 LogFormatter::LogFormatter(const std::string& pattern) 
     :m_pattern(pattern){
+    init();
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) {
@@ -256,7 +278,7 @@ void LogFormatter::init() {
             if (!nstr.empty()) {
                 vec.push_back(std::make_tuple(nstr, std::string(), 0));
                 nstr.clear();
-            
+            } 
             vec.push_back(std::make_tuple(str, fmt, 1));
             i = n - 1;
         } else if (fmt_status == 1) {
@@ -266,10 +288,9 @@ void LogFormatter::init() {
             }
         }
 
-    }
 
     if (!nstr.empty()) {
-        vec.push_back(std::make_tuple(nstr, "", 0)); 
+        vec.push_back(std::make_tuple(nstr, "", 0));
     }
     // %m --- 消息体
     // %p --- 日志级别
@@ -306,13 +327,15 @@ void LogFormatter::init() {
             auto it = s_format_items.find(std::get<0>(i));
             if (it == s_format_items.end()) {
                 m_items.push_back(FormatItem::ptr(new StringFormatItem("<<error_format %" + std::get<0>(i) + ">>")));
+                m_error = true;
             } else {
                 m_items.push_back(it->second(std::get<1>(i)));
             }
         }
 
-        std::cout << std::get<0>(i) << " - " << std::get<1>(i) << " - " << std::get<2>(i) << std::endl;
+        std::cout << "(" << std::get<0>(i) << ") - (" <<  std::get<1>(i) << ") - (" << std::get<2>(i) <<")"<< std::endl;
     }
+    std::cout << m_items.size() << std::endl;
 }
 
 
