@@ -47,6 +47,7 @@ include_directories(.)
 
 set(LIB_SRC
     yuyu/log.cc
+    yuyu/util.cc
     )
 
 # set(LIBS

@@ -21,6 +21,22 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKONW";
 }
 
+LogEventWrap::LogEventWrap(LogEvent::ptr event) 
+    :m_event(event) {
+}
+
+std::stringstream& LogEventWrap::getSS() {
+    return m_event->getSS();
+}
+// Wrap作为临时对象
+// 析构后，触发日志写入
+// 日志本身为智能指针，若在声明在主函数
+// 指针无法释放
+LogEventWrap::~LogEventWrap() {
+    m_event->getLogger()->log(m_event->getLevel(), m_event);
+}
+
+
 class MessageFormatItem : public LogFormatter::FormatItem {
 public:
     MessageFormatItem(const std::string& str = "") {}
@@ -125,18 +141,30 @@ private:
     std::string m_string;
 };
 
-LogEvent::LogEvent(const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time) 
+class TabFormatItem : public LogFormatter::FormatItem {
+public:
+    TabFormatItem(const std::string& str = "") {}  
+    void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
+        os << "\t";
+    }
+private:
+    std::string m_string;
+};
+
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time) 
     :m_file(file)
     ,m_line(line)
     ,m_elapse(elapse)
     ,m_threadId(thread_id)
     ,m_fiberId(fiber_id)
-    ,m_time(time){
+    ,m_time(time)
+    ,m_logger(logger)
+    ,m_level(level){
 }
 Logger::Logger(const std::string& name) 
     :m_name(name) 
     ,m_level(LogLevel::Level::DEBUG){
-    m_formatter.reset(new LogFormatter("%d [%p] <%f:%l> %m %n"));
+    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
 void Logger::addAppender(LogAppender::ptr appender) {
@@ -317,6 +345,8 @@ void LogFormatter::init() {
         XX(d, DataTimeFormatItem),
         XX(f, FilenameFormatItem),
         XX(l, LineFormatItem),
+        XX(T, TabFormatItem),
+        XX(F, FiberIdFormatItem),
 #undef XX
     };    
 
@@ -333,9 +363,9 @@ void LogFormatter::init() {
             }
         }
 
-        std::cout << "(" << std::get<0>(i) << ") - (" <<  std::get<1>(i) << ") - (" << std::get<2>(i) <<")"<< std::endl;
+        // std::cout << "(" << std::get<0>(i) << ") - (" <<  std::get<1>(i) << ") - (" << std::get<2>(i) <<")"<< std::endl;
     }
-    std::cout << m_items.size() << std::endl;
+    // std::cout << m_items.size() << std::endl;
 }
 
 
