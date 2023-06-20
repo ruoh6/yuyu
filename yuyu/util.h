@@ -6,11 +6,28 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <fstream>
+#include <vector>
+#include <iostream>
+#include <cstddef>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 namespace yuyu {
 
 pid_t GetThreadId();
 uint32_t GetFiberId();
+
+
+class FSUtil {
+public:
+    static void ListAllFile(std::vector<std::string>& files, const std::string& path, const std::string& subfix);
+    static std::string Dirname(const std::string& filename);
+    static bool Mkdir(const std::string& dirname);
+    static bool OpenForWrite(std::ofstream& ofs, const std::string& file_name, std::ios_base::openmode mode);
+};
 
 } // namespace end
 

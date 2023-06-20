@@ -161,6 +161,24 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const 
     ,m_logger(logger)
     ,m_level(level){
 }
+
+void LogEvent::formatIn(const char* fmt, va_list al) {
+    char* buf = nullptr;
+    int len = vasprintf(&buf, fmt, al);
+    if (len != -1) {
+        m_ss << std::string(buf, len);
+        free(buf);
+    }
+}
+
+void LogEvent::format(const char* fmt, ...) {
+    va_list al;
+    va_start(al, fmt);
+    formatIn(fmt, al);
+    va_end(al);
+}
+
+
 Logger::Logger(const std::string& name) 
     :m_name(name) 
     ,m_level(LogLevel::Level::DEBUG){
@@ -212,14 +230,21 @@ void Logger::fatal(LogEvent::ptr event) {
     log(LogLevel::FATAL, event);
 }
 
-FileLogAppender::FileLogAppender(std::string& filename) 
+FileLogAppender::FileLogAppender(const std::string& filename) 
     :m_filename(filename) {
-    
+    reopen();
 }
 
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
-        m_filestream << m_formatter->format(logger, level, event);
+        uint64_t now = event->getTime();
+        if (now >= (m_lastTime + 3)) {
+            reopen();
+            m_lastTime = now;
+        }
+    }
+    if (!m_formatter->format(m_filestream, logger, level, event)) {
+        std::cout << "Error"  << std::endl;
     }
 }
 
@@ -227,8 +252,9 @@ bool FileLogAppender::reopen() {
     if (m_filestream) {
         m_filestream.close();
     }
-    m_filestream.open(m_filename);
-    return !!m_filestream;
+    //m_filestream.open(m_filename);
+    //return !!m_filestream;
+    return FSUtil::OpenForWrite(m_filestream, m_filename, std::ios::app);
 }
 
 void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) {
@@ -248,6 +274,13 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger, LogLevel::Level
         i->format(ss, logger, level, event);
     }
     return ss.str();
+}
+
+std::ostream& LogFormatter::format(std::ostream& ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) {
+    for (auto& i : m_items) {
+        i->format(ofs, logger, level, event);
+    }
+    return ofs;
 }
 
 // 仿print
@@ -368,5 +401,28 @@ void LogFormatter::init() {
     // std::cout << m_items.size() << std::endl;
 }
 
+LoggerManager::LoggerManager() {
+    m_root.reset(new Logger);
+    m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
+    //m_loggers[m_root->getName()] = m_root;
+    // init();
+}
+
+Logger::ptr LoggerManager::getLogger(const std::string& name) {
+    auto it = m_loggers.find(name);
+    //if (it != m_loggers.end()) {
+    //    return it->second;
+    //} 
+
+    return it == m_loggers.end() ? m_root : it->second;
+    //Logger::ptr logger(new Logger(name));
+    //logger->m_root = m_root;
+    //m_loggers[name] = logger;
+    //return logger;
+}
+
+void LoggerManager::init() {
+
+}
 
 } // namespace end

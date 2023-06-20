@@ -3,6 +3,7 @@
 
 #include <string>
 #include <stdint.h>
+#include <stdarg.h>
 #include <memory>
 #include <list>
 #include <vector>
@@ -10,7 +11,9 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include "yuyu/util.h"
+#include <map>
+#include "util.h"
+#include "singleton.h"
 
 #define YUYU_LOG_LEVEL(logger, level) \
     if (logger->getLevel() <= level) \
@@ -21,6 +24,15 @@
 #define YUYU_LOG_ERROR(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::ERROR)
 #define YUYU_LOG_FATAL(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::FATAL)
 
+
+#define YUYU_LOG_FMT_LEVEL(logger, level, fmt, ...) \
+    if (logger->getLevel() <= level) \
+        yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0)))).getEvent()->format(fmt, __VA_ARGS__)
+#define YUYU_LOG_FMT_DEBUG(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::DEBUG, fmt, __VA_ARGS__)
+#define YUYU_LOG_FMT_INFO(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::INFO, fmt, __VA_ARGS__)
+#define YUYU_LOG_FMT_WARN(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::WARN, fmt, __VA_ARGS__)
+#define YUYU_LOG_FMT_ERROR(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::ERROR, fmt, __VA_ARGS__)
+#define YUYU_LOG_FMT_FATAL(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::FATAL, fmt, __VA_ARGS__)
 namespace yuyu {
 
 class Logger;
@@ -54,6 +66,8 @@ public:
     std::stringstream& getSS()  { return m_ss;}
     std::shared_ptr<Logger> getLogger() { return m_logger;}
     LogLevel::Level getLevel() { return m_level;}
+    void format(const char* fmt, ...);
+    void formatIn(const char* fmt, va_list al);
 private:
     const char* m_file = nullptr;       // 文件名
     int32_t m_line = 0;                 // 行号
@@ -62,7 +76,7 @@ private:
     uint32_t m_fiberId = 0;             // 协程ID
     uint64_t m_time = 0;                // 时间戳
     std::stringstream m_ss;              // 内容
-    std::shared_ptr<Logger> m_logger;                                     
+    std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
 };
 
@@ -70,6 +84,7 @@ class LogEventWrap {
 public:
     LogEventWrap(LogEvent::ptr event);
     ~LogEventWrap();
+    LogEvent::ptr getEvent() { return m_event;}
     std::stringstream& getSS();
 private:
     LogEvent::ptr m_event;
@@ -82,6 +97,7 @@ public:
     LogFormatter(const std::string& pattern);
     // %t
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
+    std::ostream& format(std::ostream& ofs, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);
 public:
     class FormatItem {
     public:
@@ -128,11 +144,13 @@ public:
     void setLevel(LogLevel::Level val) { m_level = val;}
     LogLevel::Level getLevel() const { return m_level;} 
     const std::string getName() const { return m_name;}
+    
 private:
     std::string m_name;                     // 日志名称
     LogLevel::Level m_level;                // 日志级别
     std::list<LogAppender::ptr> m_appenders;// Appender集合
     LogFormatter::ptr m_formatter;
+    Logger::ptr m_root;
 };
 
 // 输出到控制台
@@ -146,15 +164,29 @@ public:
 class FileLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<FileLogAppender> ptr;
-    FileLogAppender(std::string& filename);
+    FileLogAppender(const std::string& filename);
     void log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override;
     // 重新打开文件，打开成功true，失败false
     bool reopen();
 private:
     std::string m_filename;
     std::ofstream m_filestream;
+    uint64_t m_lastTime = 0;
 };
 
+class LoggerManager {
+public:
+    LoggerManager();
+    void init();
+    Logger::ptr getLogger(const std::string& name);
+    Logger::ptr getRoot() const { return m_root;}
+private:
+    std::map<std::string, Logger::ptr> m_loggers;
+    Logger::ptr m_root;
+};
+
+
+typedef yuyu::Singleton<LoggerManager> LoggerMgr;
 } // namespace end
 
 #endif
