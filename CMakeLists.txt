@@ -48,6 +48,7 @@ include_directories(.)
 set(LIB_SRC
     yuyu/log.cc
     yuyu/util.cc
+    yuyu/config.cc
     )
 
 # set(LIBS
@@ -69,9 +70,12 @@ add_library(yuyu SHARED ${LIB_SRC})
 
 
 # yuyu_add_executable(test_log "tests/test_log.cc" yuyu "${LIBS}")
-add_executable(test ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
-add_dependencies(test yuyu)
-target_link_libraries(test yuyu)
+add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
+add_dependencies(test_log yuyu)
+target_link_libraries(test_log yuyu)
 
+add_executable(test_config ${PROJECT_SOURCE_DIR}/tests/test_config.cc)
+add_dependencies(test_config yuyu)
+target_link_libraries(test_config yuyu)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
