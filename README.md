@@ -5,6 +5,8 @@
 - Ubuntu 16.04
 - gcc 9.1
 - cmake 3.14.5
+## 依赖
+- [yaml-cpp](https://github.com/jbeder/yaml-cpp) 
 ## 项目路径
 ```
 ./
