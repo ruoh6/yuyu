@@ -7,4 +7,8 @@
 namespace yuyu {
 
 Config::ConfigVarMap Config::s_datas;
+// TODO
+void LoadFromYaml(const YAML::node& root) {
+
+}
 } // namespace end

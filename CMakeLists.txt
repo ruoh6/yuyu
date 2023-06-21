@@ -9,10 +9,10 @@ set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-
 # set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -g -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function")
 
 include_directories(.)
-# include_directories(/apps/sylar/include)
-# link_directories(/apps/sylar/lib)
-# # no lib64
-# link_directories(/apps/sylar/lib64)
+include_directories(/apps/sylar/include)
+link_directories(/apps/sylar/lib)
+# no lib64
+link_directories(/apps/sylar/lib64)
 
 # set module path:./cmake
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -76,6 +76,6 @@ target_link_libraries(test_log yuyu)
 
 add_executable(test_config ${PROJECT_SOURCE_DIR}/tests/test_config.cc)
 add_dependencies(test_config yuyu)
-target_link_libraries(test_config yuyu)
+target_link_libraries(test_config yuyu yaml-cpp)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

@@ -8,7 +8,9 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <yaml-cpp/yaml.h>
 #include "log.h"
 
 namespace yuyu {
@@ -18,6 +20,7 @@ public:
     ConfigVarBase(const std::string& name, const std::string& description = "")
         :m_name(name)
         ,m_description(description) {
+        std::transfer(m_name.begin(), m_name.end(), m_name.begin(), ::tolower());
     }
     virtual ~ConfigVarBase() {}
     const std::string& getName() const { return m_name;}
@@ -67,6 +70,7 @@ class Config {
 public:
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
     template<class T>
+    // TODO
     static typename ConfigVar<T>::ptr Lookup(const std::string& name, const T& default_value
                                              , const std::string& description = "") {
         auto tmp = Lookup<T>(name);
@@ -74,7 +78,7 @@ public:
             YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "Lookup name=" << "exists";
             return tmp;
         }
-        if (name.find_first_not_of("abcdefghikjlmnopqrstuvwxyzABCDEFGHIKJLMNOPQRSTUVWXYZ._0123456789")
+        if (name.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._0123456789")
             != std::string::npos) {
             YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Lookup invalid name " << name;
             throw std::invalid_argument(name);
@@ -85,6 +89,7 @@ public:
     }
 
     template<class T>
+    // TODO
     static typename ConfigVar<T>::ptr Lookup(const std::string& name) {
         auto it = s_datas.find(name);
         if (it == s_datas.end()) {
@@ -92,6 +97,8 @@ public:
         }
         return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
     }
+
+    static void LoadFromYaml(const YAML::node& root);
 private:
     static ConfigVarMap s_datas;
 };
