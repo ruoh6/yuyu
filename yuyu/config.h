@@ -57,6 +57,8 @@ public:
         return false;
     }
 
+    const T getValue() const { return m_val;}
+    void setValue(const T& v) { m_val = v;}
 private:
     T m_val;
 };
@@ -72,14 +74,14 @@ public:
             YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "Lookup name=" << "exists";
             return tmp;
         }
-        if (name.find_first_of("abcdefghikjlmnopqrstuvwxyzABCDEFGHIKJLMNOPQRSTUVWXYZ._0123456789")
+        if (name.find_first_not_of("abcdefghikjlmnopqrstuvwxyzABCDEFGHIKJLMNOPQRSTUVWXYZ._0123456789")
             != std::string::npos) {
-            YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Lookup invalid name" << name;
+            YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Lookup invalid name " << name;
             throw std::invalid_argument(name);
         }
         typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value, description));
         s_datas[name] = v;
-
+        return v;
     }
 
     template<class T>

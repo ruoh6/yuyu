@@ -6,4 +6,5 @@
 
 namespace yuyu {
 
+Config::ConfigVarMap Config::s_datas;
 } // namespace end
