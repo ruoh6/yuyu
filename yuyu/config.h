@@ -9,8 +9,11 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <cctype>
 #include <boost/lexical_cast.hpp>
 #include <yaml-cpp/yaml.h>
+#include <list>
+#include <utility>
 #include "log.h"
 
 namespace yuyu {
@@ -20,7 +23,8 @@ public:
     ConfigVarBase(const std::string& name, const std::string& description = "")
         :m_name(name)
         ,m_description(description) {
-        std::transfer(m_name.begin(), m_name.end(), m_name.begin(), ::tolower());
+        std::transform(m_name.begin(), m_name.end(), m_name.begin(),
+                       [](unsigned char c) { return std::tolower(c);});
     }
     virtual ~ConfigVarBase() {}
     const std::string& getName() const { return m_name;}
@@ -98,10 +102,12 @@ public:
         return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
     }
 
-    static void LoadFromYaml(const YAML::node& root);
+    static void LoadFromYaml(const YAML::Node& root);
+    static ConfigVarBase::ptr LookupBase(const std::string& name);
 private:
     static ConfigVarMap s_datas;
 };
+
 } // namespace end
 
 #endif //YUYU_CONFIG_H
