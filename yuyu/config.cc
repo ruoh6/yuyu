@@ -15,18 +15,17 @@ ConfigVarBase::ptr Config::LookupBase(const std::string& name) {
 
 static void ListAllMember(const std::string& prefix,
                           const YAML::Node& node,
-                          const std::list<std::pair<const std::string, const YAML::Node> >& output) {
+                          std::list<std::pair<std::string, const YAML::Node> >& output) {
     if (prefix.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._0123456789") != std::string::npos) {
         YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Config invalid name: " << prefix << " : " << node;
         return;
     }
     // TODO: NEED FIX THIS BUG
-    const std::pair<const std::string, const YAML::Node> it = std::make_pair(prefix, node);
-    output.push_back(it);
+    output.push_back(std::make_pair(prefix, node));
     if (node.IsMap()) {
         for (auto it = node.begin(); it != node.end() ; ++it) {
              ListAllMember(prefix.empty() ? it->first.Scalar()
-             : prefix + " . " + it->first.Scalar(), it->second, output);
+             : prefix + "." + it->first.Scalar(), it->second, output);
         }
     }
 }

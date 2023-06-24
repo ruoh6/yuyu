@@ -24,7 +24,7 @@ public:
         :m_name(name)
         ,m_description(description) {
         std::transform(m_name.begin(), m_name.end(), m_name.begin(),
-                       [](unsigned char c) { return std::tolower(c);});
+                       ::tolower);
     }
     virtual ~ConfigVarBase() {}
     const std::string& getName() const { return m_name;}
@@ -37,7 +37,48 @@ private:
     std::string m_description;
 };
 
+template<class F, class T>
+class LexicalCast {
+public:
+    T operator() (const F& v) {
+        return boost::lexical_cast<T>(v);
+    }
+};
+
+// 偏特化 std::string --> vector
 template<class T>
+class LexicalCast<std::string, std::vector<T> > {
+public:
+    std::vector<T> operator() (const std::string& v) {
+        YAML::Node node = YAML::Load(v);
+        std::stringstream ss;
+        typename std::vector<T> vec;
+        for (size_t i = 0; i < node.size(); ++i) {
+            ss.str("");
+            ss << node[i];
+            vec.push_back(LexicalCast<std::string, T>()(ss.str()));
+        }
+        return vec;
+    }
+};
+
+template<class T>
+class LexicalCast<std::vector<T>, std::string> {
+public:
+    std::string operator() (const std::vector<T>& v) {
+        YAML::Node node;
+        for (auto& i : v) {
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
+        }
+        std::stringstream ss;
+        ss << node;
+
+        return ss.str();
+    }
+};
+
+template<class T, class FromStr = LexicalCast<std::string, T>
+                , class ToStr = LexicalCast<T, std::string> >
 class ConfigVar : public ConfigVarBase {
 public:
     typedef std::shared_ptr<ConfigVar> ptr;
@@ -47,7 +88,8 @@ public:
     }
     std::string toString() override {
         try {
-            return boost::lexical_cast<std::string>(m_val);
+            //return boost::lexical_cast<std::string>(m_val);
+            return ToStr()(m_val);
         } catch (std::exception& e) {
             YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "ConfigVar:toString exception" << e.what() <<
             " convert: " << typeid(m_val).name() << " to String";
@@ -56,7 +98,8 @@ public:
     }
     bool fromString(const std::string& val) override {
         try {
-            m_val = boost::lexical_cast<T>(val);
+            //m_val = boost::lexical_cast<T>(val);
+            setValue(FromStr()(val));
         } catch (std::exception& e) {
             YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "ConfigVar:toString exception" << e.what() <<
             " convert: to string" << typeid(m_val).name();
