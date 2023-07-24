@@ -37,4 +37,4 @@ Logger （定义日志类别）
 Appender （日志输出地）
 ```
 ## 配置系统
-
+规则[约定优于配置](https://zh.wikipedia.org/wiki/%E7%BA%A6%E5%AE%9A%E4%BC%98%E4%BA%8E%E9%85%8D%E7%BD%AE)

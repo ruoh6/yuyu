@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <typeinfo>
+#include <cxxabi.h>
 
 namespace yuyu {
 
@@ -28,6 +30,12 @@ public:
     static bool Mkdir(const std::string& dirname);
     static bool OpenForWrite(std::ofstream& ofs, const std::string& file_name, std::ios_base::openmode mode);
 };
+
+template<class T>
+const char* TypeToName() {
+    static const char* s_name = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+    return s_name;
+}
 
 } // namespace end
 
