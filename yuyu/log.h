@@ -35,6 +35,8 @@
 #define YUYU_LOG_FMT_FATAL(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::FATAL, fmt, __VA_ARGS__)
 
 #define YUYU_LOG_ROOT() yuyu::LoggerMgr::GetInstance()->getRoot()
+#define YUYU_LOG_NAME(name) yuyu::LoggerMgr::GetInstance()->getLogger(name)
+
 namespace yuyu {
 
 class Logger;

@@ -106,6 +106,10 @@ void test_config() {
 class Person {
 public:
     Person() {};
+    std::string m_name = "";
+    int m_age = 0;
+    bool m_sex = 0;
+
     std::string toString() const {
         std::stringstream ss;
         ss << "[Person name=" << m_name
@@ -113,10 +117,12 @@ public:
            << " sex=" << m_sex << "]";
         return ss.str();
     }
-
-    std::string m_name = "";
-    int m_age = 0;
-    bool m_sex = 0;
+    
+    bool operator==(const Person& oth) const {
+        return m_name == oth.m_name
+            && m_age == oth.m_age
+            && m_sex == oth.m_sex;
+    }
 
 };
 
@@ -172,6 +178,11 @@ void test_class(){
         YUYU_LOG_INFO(YUYU_LOG_ROOT()) << prefix << ": size=" << m.size(); \
     }
 
+    g_person->addListener(10, [](const Person& old_value, const Person& new_value) {
+        YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "old_value=" << old_value.toString()
+            << " new_value=" << new_value.toString();
+    });
+
     XX_MP(g_map_person, "class.map before");
     YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "before: " << g_map_vec_person->toString();
     YAML::Node root = YAML::LoadFile("./conf/log.yml");
@@ -180,8 +191,6 @@ void test_class(){
     YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "after: " << g_person->getValue().toString() << " - " << g_person->toString();
     YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "after: " << g_map_person->toString(); 
     XX_MP(g_map_person, "class.map after");
-    // TODO
-    // need to fix map output reverse order
     YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "after: " << g_map_vec_person->toString();
 }
 
