@@ -1,6 +1,10 @@
 #include "log.h"
+#include "config.h"
 #include <map>
 #include <time.h>
+#include <functional>
+#include <string.h>
+
 namespace yuyu {
 
 const char* LogLevel::ToString(LogLevel::Level level) {
@@ -65,7 +69,7 @@ class NameFormatItem : public LogFormatter::FormatItem {
 public:
     NameFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) override {
-        os << logger->getName();
+        os << event->getLogger()->getName();
     }
 };
 
@@ -178,6 +182,14 @@ void LogEvent::format(const char* fmt, ...) {
     va_end(al);
 }
 
+void LogAppender::setFormatter(LogFormatter::ptr val) {
+    m_formatter = val;
+    if (m_formatter) {
+        m_hasFormatter = true;
+    } else {
+        m_hasFormatter = false;
+    }
+}
 
 Logger::Logger(const std::string& name) 
     :m_name(name) 
@@ -204,8 +216,12 @@ void Logger::delAppender(LogAppender::ptr appender) {
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self = shared_from_this();
-        for (auto& i : m_appenders) {
-            i->log(self, level, event);
+        if(!m_appenders.empty()) {
+            for (auto& i : m_appenders) {
+                i->log(self, level, event);
+            }
+        } else if(m_root) {
+            m_root->log(level, event);
         }
     }
 }
@@ -228,6 +244,27 @@ void Logger::error(LogEvent::ptr event) {
 
 void Logger::fatal(LogEvent::ptr event) {
     log(LogLevel::FATAL, event);
+}
+
+// TODO
+void Logger::setFormatter(LogFormatter::ptr val) {
+    m_formatter = val;
+    for (auto& i : m_appenders) {
+        if (!i->m_hasFormatter) {
+            i->m_formatter = m_formatter;
+        }
+    }
+}
+
+void Logger::setFormatter(const std::string& val) {
+}
+
+LogFormatter::ptr Logger::getFormatter() {
+    return m_formatter;
+}
+
+std::string Logger::toYamlString() {
+    return nullptr;
 }
 
 FileLogAppender::FileLogAppender(const std::string& filename) 
@@ -257,10 +294,20 @@ bool FileLogAppender::reopen() {
     return FSUtil::OpenForWrite(m_filestream, m_filename, std::ios::app);
 }
 
+// TODO
+std::string FileLogAppender::toYamlString() {
+    return nullptr;
+}
+
 void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         std::cout << m_formatter->format(logger, level, event);
     }
+}
+
+// TODO
+std::string StdoutLogAppender::toYamlString() {
+    return nullptr;
 }
 
 LogFormatter::LogFormatter(const std::string& pattern) 
@@ -404,25 +451,97 @@ void LogFormatter::init() {
 LoggerManager::LoggerManager() {
     m_root.reset(new Logger);
     m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
-    //m_loggers[m_root->getName()] = m_root;
-    // init();
+    m_loggers[m_root->getName()] = m_root;
+    init();
 }
 
 Logger::ptr LoggerManager::getLogger(const std::string& name) {
     auto it = m_loggers.find(name);
-    //if (it != m_loggers.end()) {
-    //    return it->second;
-    //} 
+    if (it != m_loggers.end()) {
+        return it->second;
+    } 
 
-    return it == m_loggers.end() ? m_root : it->second;
-    //Logger::ptr logger(new Logger(name));
-    //logger->m_root = m_root;
-    //m_loggers[name] = logger;
-    //return logger;
+//    return it == m_loggers.end() ? m_root : it->second;
+    Logger::ptr logger(new Logger(name));
+    logger->m_root = m_root;
+    m_loggers[name] = logger;
+    return logger;
 }
 
+struct LogAppenderDefine {
+    int type = 0;// 1 file, 2 stdout
+    LogLevel::Level level = LogLevel::UNKNOW;
+    std::string formatter;
+    std::string file;
+
+    bool operator==(const LogAppenderDefine& oth) const {
+        return type == oth.type
+            && level == oth.level
+            && formatter == oth.formatter
+            && file == oth.file;
+    }
+
+};
+
+struct LogDefine {
+    std::string name;
+    LogLevel::Level level = LogLevel::UNKNOW;
+    std::string formatter;
+    std::vector<LogAppenderDefine> appenders;
+
+    bool operator==(const LogDefine& oth) const {
+        return name == oth.name
+            && level == oth.level
+            && formatter == oth.formatter
+            && appenders == oth.appenders;
+    }
+    bool operator<(const LogDefine& oth) const {
+        return name < oth.name;
+    }
+};
+
+
+yuyu::ConfigVar<std::set<LogDefine> >::ptr g_log_defines = 
+    yuyu::Config::Lookup("log", std::set<LogDefine>(), "log config");
+
+struct LogIniter {
+    // TODO
+    // 2024.1.29 17 20:49
+    LogIniter() {
+        g_log_defines->addListener(0xF123, [](const std::set<LogDefine>& old_value,
+                    const std::set<LogDefine>& new_value){
+
+                // 新增
+                for(auto& i : new_value) {
+                    auto it = old_value.find(i);
+                    yuyu::Logger::ptr logger;
+                    if(it == old_value.end()) {
+                    // 新增logger
+                        
+                    } else {
+                        if(!(i == *it)) {
+                            // 修改logger
+                        }
+                    }
+                }
+                // 修改
+                // 删除
+                for(auto& i : old_value) {
+                    auto it = new_value.find(i);
+                    if(it == new_value.end()) {
+                        auto logger = YUYU_LOG_NAME(i.name);
+                        logger->setLevel((LogLevel::Level)0);
+                    }
+                }
+                });
+    }
+};
 void LoggerManager::init() {
 
+}
+
+std::string LoggerManager::toYamlString() {
+    return nullptr;
 }
 
 } // namespace end

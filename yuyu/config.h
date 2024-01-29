@@ -312,7 +312,7 @@ public:
 
 private:
     T m_val;
-    // 回调函数组
+    // 变更回调函数组, uint64_t key 要求唯一，一般采用hash值
     std::map<uint64_t, on_change_cb> m_cbs;
 };
 
@@ -331,7 +331,7 @@ public:
                 return tmp;
             } else {
                 YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Lookup name=" << "exists but type not: " 
-                    << typeid(T).name() << " real_name " << it->second->getTypeName()
+                    << typeid(T).name() << " real_name=" << it->second->getTypeName()
                     << " " << it->second->toString();
                 return nullptr;
             }
