@@ -1,5 +1,6 @@
 # ignore all files in the build/ directory
 build/
+.vscode/
 
 # exclude lib/ bin/ directory
 lib/

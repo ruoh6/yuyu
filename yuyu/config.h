@@ -74,7 +74,7 @@ template<class T>
 class LexicalCast<std::vector<T>, std::string> {
 public:
     std::string operator() (const std::vector<T>& v) {
-        YAML::Node node;
+        YAML::Node node(YAML::NodeType::Sequence);
         for (auto& i : v) {
             node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
         }
@@ -106,7 +106,7 @@ template<class T>
 class LexicalCast<std::list<T>, std::string> {
 public:
     std::string operator() (const std::list<T>& v) {
-        YAML::Node node;
+        YAML::Node node(YAML::NodeType::Sequence);
         for (auto& i : v) {
             node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
         }
@@ -138,7 +138,7 @@ template<class T>
 class LexicalCast<std::set<T>, std::string> {
 public:
     std::string operator() (const std::set<T>& v) {
-        YAML::Node node;
+        YAML::Node node(YAML::NodeType::Sequence);
         for (auto& i : v) {
             node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
         }
@@ -170,7 +170,7 @@ template<class T>
 class LexicalCast<std::unordered_set<T>, std::string> {
 public:
     std::string operator() (const std::unordered_set<T>& v) {
-        YAML::Node node;
+        YAML::Node node(YAML::NodeType::Sequence);
         for (auto& i : v) {
             node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
         }
@@ -293,8 +293,11 @@ public:
 
     std::string getTypeName() const override { return typeid(T).name(); }
 
-    void addListener(uint64_t key, on_change_cb cb) {
-        m_cbs[key] = cb;
+    uint64_t addListener(on_change_cb cb) {
+        static uint64_t s_fun_id = 0;;
+        ++s_fun_id;
+        m_cbs[s_fun_id] = cb;
+        return s_fun_id;
     }
 
     void delListener(uint64_t key) {
@@ -323,8 +326,8 @@ public:
     // TODO
     static typename ConfigVar<T>::ptr Lookup(const std::string& name, const T& default_value
                                              , const std::string& description = "") {
-        auto it = s_datas.find(name);
-        if (it != s_datas.end()) {
+        auto it = GetDatas().find(name);
+        if (it != GetDatas().end()) {
             auto tmp = std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
             if (tmp) {
                 YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "Lookup name=" << "exists";
@@ -343,15 +346,16 @@ public:
             throw std::invalid_argument(name);
         }
         typename ConfigVar<T>::ptr v(new ConfigVar<T>(name, default_value, description));
-        s_datas[name] = v;
+        GetDatas()[name] = v;
+        
         return v;
     }
 
     template<class T>
     // TODO
     static typename ConfigVar<T>::ptr Lookup(const std::string& name) {
-        auto it = s_datas.find(name);
-        if (it == s_datas.end()) {
+        auto it = GetDatas().find(name);
+        if (it == GetDatas().end()) {
             return nullptr;
         }
         return std::dynamic_pointer_cast<ConfigVar<T> >(it->second);
@@ -359,8 +363,12 @@ public:
 
     static void LoadFromYaml(const YAML::Node& root);
     static ConfigVarBase::ptr LookupBase(const std::string& name);
+
 private:
-    static ConfigVarMap s_datas;
+    static ConfigVarMap& GetDatas() {
+        static ConfigVarMap s_datas;
+        return s_datas;
+    }
 };
 
 } // namespace end

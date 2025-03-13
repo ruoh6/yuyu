@@ -54,6 +54,7 @@ public:
         FATAL =5
     };
     static const char* ToString(LogLevel::Level level);
+    static LogLevel::Level FromString(const std::string& str);
 };
 
 class LogEvent {
@@ -67,6 +68,7 @@ public:
     uint32_t getThreadId() const { return m_threadId;}
     uint32_t getFiberId() const { return m_fiberId;}
     uint32_t getTime() const { return m_time;}
+    const std::string& getThreadName() const { return m_threadName; }
     const std::string getContent() const { return m_ss.str();}
     std::stringstream& getSS()  { return m_ss;}
     std::shared_ptr<Logger> getLogger() { return m_logger;}
@@ -80,6 +82,7 @@ private:
     uint32_t m_threadId = 0;            // 线程ID
     uint32_t m_fiberId = 0;             // 协程ID
     uint64_t m_time = 0;                // 时间戳
+    std::string m_threadName;           // 线程名称
     std::stringstream m_ss;             // 内容
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
@@ -128,6 +131,7 @@ public:
 
     bool isError() const { return m_error; };
     void init();
+    const std::string getPattern() const { return m_pattern; }
 private:
     std::string m_pattern;
     std::vector<FormatItem::ptr> m_items; 
@@ -169,7 +173,7 @@ public:
 
     void addAppender(LogAppender::ptr appender);
     void delAppender(LogAppender::ptr appender);
-    void clearAppenders(LogAppender::ptr appender);
+    void clearAppenders();
     void setLevel(LogLevel::Level val) { m_level = val;}
     LogLevel::Level getLevel() const { return m_level;} 
     const std::string getName() const { return m_name;}

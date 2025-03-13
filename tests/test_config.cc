@@ -182,7 +182,7 @@ void test_class(){
      * @details
      * 测试配置变更
      */
-    g_person->addListener(10, [](const Person& old_value, const Person& new_value) {
+    g_person->addListener([](const Person& old_value, const Person& new_value) {
         YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "old_value=" << old_value.toString()
             << " new_value=" << new_value.toString();
     });
