@@ -340,7 +340,7 @@ public:
             }
         }
 
-        if (name.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._0123456789")
+        if (name.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._012345678")
             != std::string::npos) {
             YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Lookup invalid name " << name;
             throw std::invalid_argument(name);

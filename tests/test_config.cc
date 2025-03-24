@@ -198,10 +198,27 @@ void test_class(){
     YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "after: " << g_map_vec_person->toString();
 }
 
+void test_log(){
+    static yuyu::Logger::ptr system_log = YUYU_LOG_NAME("system");
+    YUYU_LOG_INFO(system_log) << "hello system start" << std::endl;
+    std::cout << yuyu::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    YAML::Node root = YAML::LoadFile("/home/hwl/yuyu/bin/conf/log.yml");
+    yuyu::Config::LoadFromYaml(root);
+    std::cout << "==========" << std::endl;
+    std::cout << yuyu::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    std::cout << "==========" << std::endl;
+    std::cout << root << std::endl;
+    YUYU_LOG_INFO(system_log) << "hello system end" << std::endl;
+    
+    system_log->setFormatter("%d - %m%n");
+    YUYU_LOG_INFO(system_log) << "hello system end" << std::endl;
+}
+
 int main(int argc, char** argv) {
     // TODO
     // test_yaml();
     // test_config();
-    test_class();
+    // test_class();
+    test_log();
     return 0;
 }

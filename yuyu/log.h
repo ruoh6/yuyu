@@ -1,3 +1,10 @@
+/**
+ * @file log.h
+ * @brief 使用流式方式将日志级别Level的日志写入到logger
+ * @author hwl
+ * @email ruoh60662@gmail.com
+ */
+
 #ifndef __YUYU_LOG_H__
 #define __YUYU_LOG_H__
 
@@ -15,26 +22,80 @@
 #include "util.h"
 #include "singleton.h"
 
+/**
+ * @brief 使用流式方式将日志级别Level的日志写入到logger
+ */
 #define YUYU_LOG_LEVEL(logger, level) \
     if (logger->getLevel() <= level) \
         yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0)))).getSS()
+
+/**
+ * @brief 使用流式方式将日志级别Debug的日志写入到logger
+ */
 #define YUYU_LOG_DEBUG(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::DEBUG)
+
+/**
+ * @brief 使用流式方式将日志级别Info的日志写入到logger
+ */
 #define YUYU_LOG_INFO(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::INFO)
+
+/**
+ * @brief 使用流式方式将日志级别Warn的日志写入到logger
+ */
 #define YUYU_LOG_WARN(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::WARN)
+
+/**
+ * @brief 使用流式方式将日志级别Error的日志写入到logger
+ */
 #define YUYU_LOG_ERROR(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::ERROR)
+
+/**
+ * @brief 使用流式方式将日志级别Fatal的日志写入到logger
+ */
 #define YUYU_LOG_FATAL(logger) YUYU_LOG_LEVEL(logger, yuyu::LogLevel::FATAL)
 
 
+/**
+ * @brief 使用格式化方式将日志级别Level的日志写入到logger
+ */
 #define YUYU_LOG_FMT_LEVEL(logger, level, fmt, ...) \
     if (logger->getLevel() <= level) \
         yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0)))).getEvent()->format(fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别Debug的日志写入到logger
+ */
 #define YUYU_LOG_FMT_DEBUG(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::DEBUG, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别Info的日志写入到logger
+ */
 #define YUYU_LOG_FMT_INFO(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::INFO, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别Warn的日志写入到logger
+ */
 #define YUYU_LOG_FMT_WARN(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::WARN, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别Error的日志写入到logger
+ */
 #define YUYU_LOG_FMT_ERROR(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::ERROR, fmt, __VA_ARGS__)
+
+/**
+ * @brief 使用格式化方式将日志级别Fatal的日志写入到logger
+ */
 #define YUYU_LOG_FMT_FATAL(logger, fmt, ...) YUYU_LOG_FMT_LEVEL(logger, yuyu::LogLevel::FATAL, fmt, __VA_ARGS__)
 
+
+/**
+ * @brief 获取主日志器
+ */
 #define YUYU_LOG_ROOT() yuyu::LoggerMgr::GetInstance()->getRoot()
+
+/**
+ * @brief 获取name的主日志器
+ */
 #define YUYU_LOG_NAME(name) yuyu::LoggerMgr::GetInstance()->getLogger(name)
 
 namespace yuyu {
@@ -42,38 +103,120 @@ namespace yuyu {
 class Logger;
 class LoggerManager;
 
-// 日志级别
+
+/**
+ * @brief 日志级别
+ */
 class LogLevel {
 public:
+    /**
+     * @brief 日志级别枚举
+     */
     enum Level {
+        /// 未知类型
         UNKNOW = 0,
+        /// DEBUG 级别
         DEBUG = 1,
+        /// INFO 级别
         INFO = 2,
+        /// WARN 级别
         WARN = 3,
+        /// ERROR 级别
         ERROR = 4,
+        /// FATAL 级别
         FATAL =5
     };
+
+    /**
+     * @brief 日志级别转文本输出
+     * @param[in] level 日志级别
+     */
     static const char* ToString(LogLevel::Level level);
+
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     static LogLevel::Level FromString(const std::string& str);
 };
 
+/**
+ * @brief 日志事件
+ */
 class LogEvent {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
+
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time);
 
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     const char* getFile() const { return m_file;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     int32_t getLine() const { return m_line;} 
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     uint32_t getElapse() const { return m_elapse;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     uint32_t getThreadId() const { return m_threadId;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     uint32_t getFiberId() const { return m_fiberId;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     uint32_t getTime() const { return m_time;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     const std::string& getThreadName() const { return m_threadName; }
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     const std::string getContent() const { return m_ss.str();}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     std::stringstream& getSS()  { return m_ss;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     std::shared_ptr<Logger> getLogger() { return m_logger;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     LogLevel::Level getLevel() { return m_level;}
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     void format(const char* fmt, ...);
+    /**
+     * @brief 日志级别转文本
+     * @param[in] str 日志级别文本
+     */
     void formatIn(const char* fmt, va_list al);
 private:
     const char* m_file = nullptr;       // 文件名

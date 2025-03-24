@@ -310,6 +310,7 @@ std::string Logger::toYamlString() {
         node["level"] = LogLevel::ToString(m_level);
     }
     if (m_formatter) {
+        YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "formatter = " << m_formatter->getPattern();
         node["formatter"] = m_formatter->getPattern();
     }
 
@@ -536,7 +537,7 @@ Logger::ptr LoggerManager::getLogger(const std::string& name) {
         return it->second;
     } 
 
-//    return it == m_loggers.end() ? m_root : it->second;
+    YUYU_LOG_INFO(YUYU_LOG_ROOT()) << name;
     Logger::ptr logger(new Logger(name));
     logger->m_root = m_root;
     m_loggers[name] = logger;
@@ -573,6 +574,10 @@ struct LogDefine {
     bool operator<(const LogDefine& oth) const {
         return name < oth.name;
     }
+
+    bool isValid() const {
+        return !name.empty();
+    }
 };
 
 template<>
@@ -587,11 +592,12 @@ public:
         }
         ld.name = n["name"].as<std::string>();
         ld.level = LogLevel::FromString(n["level"].IsDefined() ? n["level"].as<std::string>() : "");
-        if (n["formtter"].IsDefined()) {
+        if (n["formatter"].IsDefined()) {
             ld.formatter = n["formatter"].as<std::string>();
         }
 
         if (n["appenders"].IsDefined()) {
+            std::cout << "==" << ld.name << "=" << n["appenders"].size() << std::endl;
             for(size_t x = 0; x < n["appenders"].size(); ++x) {
                 auto a = n["appenders"][x];
                 if (!a["type"].IsDefined()) {
@@ -706,7 +712,7 @@ struct LogIniter {
                         ap.reset(new FileLogAppender(a.file));
                     } else if (a.type == 2) {
                         //if (!yuyu::EnvMgr::GetInstance()->has("d")) {
-                        //      ap.reset(new StdoutLogAppender);
+                              ap.reset(new StdoutLogAppender);
                         //} else {
                         //  continue;
                         //}
@@ -724,7 +730,6 @@ struct LogIniter {
                     logger->addAppender(ap);
                 }
             }
-            // 修改
             // 删除
             for(auto& i : old_value) {
                 auto it = new_value.find(i);

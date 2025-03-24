@@ -5,6 +5,7 @@ build/
 # exclude lib/ bin/ directory
 lib/
 bin/
+tags
 
 # uisites
 *.d

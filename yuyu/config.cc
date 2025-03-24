@@ -9,6 +9,7 @@ namespace yuyu {
 static yuyu::Logger::ptr g_logger = YUYU_LOG_NAME("system");
 
 ConfigVarBase::ptr Config::LookupBase(const std::string& name) {
+    YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "name = " << name;
     auto it = GetDatas().find(name);
     return it == GetDatas().end() ? nullptr : it->second;
 }
@@ -16,7 +17,7 @@ ConfigVarBase::ptr Config::LookupBase(const std::string& name) {
 static void ListAllMember(const std::string& prefix,
                           const YAML::Node& node,
                           std::list<std::pair<std::string, const YAML::Node> >& output) {
-    if (prefix.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._0123456789") != std::string::npos) {
+    if (prefix.find_first_not_of("abcdefghikjlmnopqrstuvwxyz._012345678") != std::string::npos) {
         YUYU_LOG_ERROR(YUYU_LOG_ROOT()) << "Config invalid name: " << prefix << " : " << node;
         return;
     }
