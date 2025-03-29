@@ -217,7 +217,7 @@ public:
      * @brief 日志级别转文本
      * @param[in] str 日志级别文本
      */
-    void formatIn(const char* fmt, va_list al);
+    void format(const char* fmt, va_list al);
 private:
     const char* m_file = nullptr;       // 文件名
     int32_t m_line = 0;                 // 行号
@@ -291,6 +291,7 @@ public:
     virtual std::string toYamlString() = 0;
 
     void setFormatter(LogFormatter::ptr val); 
+    LogFormatter::ptr getFormatter();
     void setLevel(LogLevel::Level level) { m_level = level; }
     LogFormatter::ptr getFormatter() const { return m_formatter; }; 
     LogLevel::Level getLevel() const { return m_level; }

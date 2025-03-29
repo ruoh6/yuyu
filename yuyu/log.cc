@@ -194,20 +194,20 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const 
     ,m_level(level){
 }
 
-void LogEvent::formatIn(const char* fmt, va_list al) {
+void LogEvent::format(const char* fmt, ...) {
+    va_list al;
+    va_start(al, fmt);
+    format(fmt, al);
+    va_end(al);
+}
+
+void LogEvent::format(const char* fmt, va_list al) {
     char* buf = nullptr;
     int len = vasprintf(&buf, fmt, al);
     if (len != -1) {
         m_ss << std::string(buf, len);
         free(buf);
     }
-}
-
-void LogEvent::format(const char* fmt, ...) {
-    va_list al;
-    va_start(al, fmt);
-    formatIn(fmt, al);
-    va_end(al);
 }
 
 void LogAppender::setFormatter(LogFormatter::ptr val) {
@@ -219,6 +219,10 @@ void LogAppender::setFormatter(LogFormatter::ptr val) {
     }
 }
 
+LogFormatter::ptr LogAppender::getFormatter() {
+    return m_formatter;
+}
+
 Logger::Logger(const std::string& name) 
     :m_name(name) 
     ,m_level(LogLevel::Level::DEBUG){
@@ -227,7 +231,7 @@ Logger::Logger(const std::string& name)
 
 void Logger::addAppender(LogAppender::ptr appender) {
     if (!appender->getFormatter()) {
-        appender->setFormatter(m_formatter);
+        appender->m_formatter = m_formatter;
     }
     m_appenders.push_back(appender);
 }
@@ -288,7 +292,6 @@ void Logger::setFormatter(LogFormatter::ptr val) {
 }
 
 void Logger::setFormatter(const std::string& val) {
-    std::cout << "---" << val << std::endl;
     yuyu::LogFormatter::ptr new_val(new yuyu::LogFormatter(val));
     if (new_val->isError()) {
         std::cout << "Logger setFormatter name=" << m_name
