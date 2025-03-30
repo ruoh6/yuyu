@@ -59,6 +59,7 @@ set(LIB_SRC
     yuyu/log.cc
     yuyu/util.cc
     yuyu/config.cc
+    yuyu/thread.cc
     )
 
  set(LIBS
@@ -81,6 +82,7 @@ add_library(yuyu SHARED ${LIB_SRC})
 
 yuyu_add_executable(test_log "tests/test_log.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_config "tests/test_config.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_thread "tests/test_thread.cc" yuyu "${LIBS}")
 #add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
 #add_dependencies(test_log yuyu)
 #target_link_libraries(test_log yuyu)

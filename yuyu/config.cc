@@ -9,7 +9,7 @@ namespace yuyu {
 static yuyu::Logger::ptr g_logger = YUYU_LOG_NAME("system");
 
 ConfigVarBase::ptr Config::LookupBase(const std::string& name) {
-    YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "name = " << name;
+    //YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "name = " << name;
     auto it = GetDatas().find(name);
     return it == GetDatas().end() ? nullptr : it->second;
 }

@@ -313,7 +313,7 @@ std::string Logger::toYamlString() {
         node["level"] = LogLevel::ToString(m_level);
     }
     if (m_formatter) {
-        YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "formatter = " << m_formatter->getPattern();
+        //YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "formatter = " << m_formatter->getPattern();
         node["formatter"] = m_formatter->getPattern();
     }
 
@@ -369,7 +369,7 @@ std::string FileLogAppender::toYamlString() {
 
 void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
-        std::cout << m_formatter->format(logger, level, event);
+        m_formatter->format(std::cout, logger, level, event);
     }
 }
 
@@ -540,7 +540,7 @@ Logger::ptr LoggerManager::getLogger(const std::string& name) {
         return it->second;
     } 
 
-    YUYU_LOG_INFO(YUYU_LOG_ROOT()) << name;
+    //YUYU_LOG_INFO(YUYU_LOG_ROOT()) << name;
     Logger::ptr logger(new Logger(name));
     logger->m_root = m_root;
     m_loggers[name] = logger;
@@ -600,7 +600,7 @@ public:
         }
 
         if (n["appenders"].IsDefined()) {
-            std::cout << "==" << ld.name << "=" << n["appenders"].size() << std::endl;
+            //std::cout << "==" << ld.name << "=" << n["appenders"].size() << std::endl;
             for(size_t x = 0; x < n["appenders"].size(); ++x) {
                 auto a = n["appenders"][x];
                 if (!a["type"].IsDefined()) {
@@ -687,7 +687,7 @@ struct LogIniter {
         g_log_defines->addListener([](const std::set<LogDefine>& old_value,
                     const std::set<LogDefine>& new_value){
 
-            YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "on_logger_conf_changed";
+            //YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "on_logger_conf_changed";
             // 新增
             for(auto& i : new_value) {
                 auto it = old_value.find(i);
