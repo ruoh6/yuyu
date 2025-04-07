@@ -21,6 +21,7 @@
 #include <map>
 #include "util.h"
 #include "singleton.h"
+#include "thread.h"
 
 /**
  * @brief 使用流式方式将日志级别Level的日志写入到logger
@@ -286,6 +287,7 @@ class LogAppender {
 friend class Logger;
 public:
     typedef std::shared_ptr<LogAppender> ptr;
+    typedef Mutex MutexType;
     virtual ~LogAppender(){}
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
     virtual std::string toYamlString() = 0;
@@ -297,6 +299,7 @@ public:
     LogLevel::Level getLevel() const { return m_level; }
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
+    MutexType m_mutex;
     LogFormatter::ptr m_formatter;
     bool m_hasFormatter = false;
 };
@@ -307,6 +310,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 friend class LoggerManager;
 public:
     typedef std::shared_ptr<Logger> ptr;
+    typedef Mutex MutexType;
     Logger(const std::string& name = "root");
     void log(LogLevel::Level level, LogEvent::ptr event);
     void debug(LogEvent::ptr event);
@@ -332,6 +336,7 @@ private:
     LogLevel::Level m_level;                // 日志级别
     std::list<LogAppender::ptr> m_appenders;// Appender集合
     LogFormatter::ptr m_formatter;
+    MutexType m_mutex;
     Logger::ptr m_root;
 };
 
@@ -360,6 +365,7 @@ private:
 
 class LoggerManager {
 public:
+    typedef Mutex MutexType;
     LoggerManager();
     void init();
     Logger::ptr getLogger(const std::string& name);
@@ -367,6 +373,7 @@ public:
     std::string toYamlString();
 private:
     std::map<std::string, Logger::ptr> m_loggers;
+    MutexType m_mutex;
     Logger::ptr m_root;
 };
 
