@@ -46,5 +46,6 @@ int main(int argc, char** argv) {
 
     YUYU_LOG_INFO(g_logger) << "Thread test end";
     YUYU_LOG_INFO(g_logger) << "count=" << count;
+
     return 0;
 }

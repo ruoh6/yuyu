@@ -220,5 +220,11 @@ int main(int argc, char** argv) {
     // test_config();
     // test_class();
     test_log();
+    yuyu::Config::Visit([](yuyu::ConfigVarBase::ptr var) {
+            YUYU_LOG_INFO(YUYU_LOG_ROOT()) << "name=" << var->getName()
+                    << " description=" << var->getDescription()
+                    << " typename=" << var->getTypeName()
+                    << " value=" << var->toString();
+            });
     return 0;
 }
