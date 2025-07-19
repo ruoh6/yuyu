@@ -1,10 +1,11 @@
 #ifndef __YUYU_H__
 #define __YUYU_H__
 
-#include "yuyu/log.h"
-#include "yuyu/config.h"
-#include "yuyu/util.h"
-#include "yuyu/singleton.h"
-#include "yuyu/thread.h"
+#include "macro.h"
+#include "log.h"
+#include "config.h"
+#include "util.h"
+#include "singleton.h"
+#include "thread.h"
 
 #endif

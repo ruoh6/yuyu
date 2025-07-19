@@ -16,11 +16,15 @@
 #include <string.h>
 #include <typeinfo>
 #include <cxxabi.h>
+#include <execinfo.h>
+
+#include "log.h"
 
 namespace yuyu {
 
 pid_t GetThreadId();
 uint32_t GetFiberId();
+void Backtrace(std::vector<std::string>& bt, int size = 64, int skip = 1);
 
 
 class FSUtil {
