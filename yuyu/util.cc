@@ -69,6 +69,15 @@ static int __mkdir(const char* dirname) {
     return mkdir(dirname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
+std::string BacktraceToString(int size, int skip, const std::string& prefix){
+    std::vector<std::string> bt;
+    Backtrace(bt, size, skip);
+    std::stringstream ss;
+    for (size_t i = 0; i < bt.size(); i++) {
+        ss << prefix << bt[i] << std::endl;
+    }
+    return ss.str();
+}
 std::string FSUtil::Dirname(const std::string& filename) {
     if (filename.empty()) {
         return ".";

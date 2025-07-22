@@ -7,8 +7,8 @@
 #include "util.h"
 
 #if defined __GNUC__ || defined __llvm__
-#   define YUYU_LIKELY(x)       __builtin_expect(!!(x), 1);
-#   define YUYU_UNLIKELY(x)     __builtin_expect(!!(x), 0);
+#   define YUYU_LIKELY(x)       __builtin_expect(!!(x), 1)
+#   define YUYU_UNLIKELY(x)     __builtin_expect(!!(x), 0)
 #else
 #   define YUYU_LIKELY(x)   (x)
 #   define YUYU_UNLIKELY(x) (x)
