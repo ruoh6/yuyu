@@ -33,6 +33,8 @@ public:
     void swapIn();
     // 切换到后台执行
     void swapOut();
+
+    uint64_t getId() const { return m_id; }
 public:
     // 设置当前协程
     void SetThis(Fiber* f);
@@ -46,6 +48,7 @@ public:
     static uint64_t TotalFibers();
 
     static void MainFunc();
+    static uint64_t GetFiberId();
 private:
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;

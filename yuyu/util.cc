@@ -1,4 +1,5 @@
 #include "util.h"
+#include "fiber.h"
 
 namespace yuyu {
 
@@ -9,8 +10,8 @@ pid_t GetThreadId() {
 }
 
 
-uint32_t GetFiberId() {
-    return 0;
+uint64_t GetFiberId() {
+    return yuyu::Fiber::GetFiberId();
 }
 
 static std::string demangle(const char* str) {

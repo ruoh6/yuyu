@@ -34,6 +34,8 @@ Fiber::Fiber() {
         YUYU_ASSERT2(false, "getcontext");
     }
     ++s_fiber_count;
+
+    YUYU_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
 
 Fiber::Fiber(std::function<void()> cb, size_t stacksize) 
@@ -52,6 +54,8 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize)
     m_ctx.uc_stack.ss_size = m_stacksize;
 
     makecontext(&m_ctx, &Fiber::MainFunc, 0);
+
+    YUYU_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
 
 Fiber::~Fiber() {
@@ -70,6 +74,8 @@ Fiber::~Fiber() {
             SetThis(nullptr);
         }
     }
+    YUYU_LOG_DEBUG(g_logger) << "Fiber::~Fiber id=" << m_id
+                             << " total=" << s_fiber_count;
 }
 
 // 重置协程函数，，并重置协程状态
@@ -161,6 +167,14 @@ void Fiber::MainFunc() {
         cur->m_state = EXCPT;
         YUYU_LOG_ERROR(g_logger) << "Fiber Execption";
     }
+}
+
+
+uint64_t Fiber::GetFiberId() {
+    if (t_fiber) {
+        return t_fiber->getId();
+    }
+    return 0;
 }
 
 } // namespace end
