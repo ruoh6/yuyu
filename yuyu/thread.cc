@@ -41,6 +41,7 @@ const std::string& Thread::GetName() {
 }
 
 void Thread::SetName(const std::string& name) {
+    if (name.empty()) return;
     if (t_thread) {
         t_thread->m_name = name;
     } 
@@ -87,6 +88,7 @@ void* Thread::run(void* arg) {
     Thread* thread = (Thread*)arg;
     t_thread = thread;
     thread->m_id = yuyu::GetThreadId(); 
+    SetName(thread->m_name);
     pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
 
     std::function<void()> cb;

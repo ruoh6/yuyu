@@ -39,7 +39,7 @@ Fiber::Fiber() {
 }
 
 Fiber::Fiber(std::function<void()> cb, size_t stacksize) 
-    : m_id(++s_fiber_count)
+    : m_id(++s_fiber_id)
     , m_cb(cb) {
     ++s_fiber_count;
     m_stacksize = stacksize ? stacksize : g_config_fiber_stacksize->getValue();
@@ -167,6 +167,12 @@ void Fiber::MainFunc() {
         cur->m_state = EXCPT;
         YUYU_LOG_ERROR(g_logger) << "Fiber Execption";
     }
+
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->swapOut();
+
+    YUYU_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
 

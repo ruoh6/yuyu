@@ -30,8 +30,10 @@ void fun3(){
 
 int main(int argc, char** argv) {
     YUYU_LOG_INFO(g_logger) << "Thread test begin";
-    YAML::Node root = YAML::LoadFile("/home/hwl/yuyu/bin/conf/log2.yml");
-    yuyu::Config::LoadFromYaml(root);
+    // std::string filePath("home/ubuntu/yuyu/conf/log2.yml");
+    // YAML::Node root = YAML::LoadFile("/home/hwl/yuyu/bin/conf/log2.yml");
+    // YAML::Node root = YAML::LoadFile(filePath.c_str());
+    // yuyu::Config::LoadFromYaml(root);
     std::vector<yuyu::Thread::ptr> thrs;
     for (int i = 0; i < 2; i++) {
         yuyu::Thread::ptr thr(new yuyu::Thread(&fun2, "name_" + std::to_string(i * 2)));

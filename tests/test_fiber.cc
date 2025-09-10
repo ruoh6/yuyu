@@ -19,22 +19,24 @@ void test_fiber() {
         fiber->swapIn();
         YUYU_LOG_INFO(g_logger) << "main after swap in";
         fiber->swapIn();
+        YUYU_LOG_INFO(g_logger) << "main after end";
+        fiber->swapIn();
     }
     YUYU_LOG_INFO(g_logger) << "main end -1";
 }
 
 int main(int argc, char** agrv)
 {
-    // yuyu::Thread::SetName("main");
+    yuyu::Thread::SetName("main");
 
-    // std::vector<yuyu::Thread::ptr> thrs;
-    // for (int i = 0; i < 3;i++) {
-    //     thrs.push_back(yuyu::Thread::ptr(
-    //                 new yuyu::Thread(&test_fiber, "name_" + std::to_string(i))));
-    // }
-    // for (auto i : thrs) {
-    //     i->join();
-    // }
-    test_fiber();
+    std::vector<yuyu::Thread::ptr> thrs;
+    for (int i = 0; i < 3;i++) {
+        thrs.push_back(yuyu::Thread::ptr(
+                    new yuyu::Thread(&test_fiber, "name_" + std::to_string(i))));
+    }
+    for (auto i : thrs) {
+        i->join();
+    }
+    //test_fiber();
     return 0;
 }

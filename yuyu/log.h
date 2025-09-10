@@ -28,7 +28,7 @@
  */
 #define YUYU_LOG_LEVEL(logger, level) \
     if (logger->getLevel() <= level) \
-        yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0)))).getSS()
+        yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0), yuyu::Thread::GetName()))).getSS()
 
 /**
  * @brief 使用流式方式将日志级别Debug的日志写入到logger
@@ -61,7 +61,7 @@
  */
 #define YUYU_LOG_FMT_LEVEL(logger, level, fmt, ...) \
     if (logger->getLevel() <= level) \
-        yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0)))).getEvent()->format(fmt, __VA_ARGS__)
+        yuyu::LogEventWrap(yuyu::LogEvent::ptr(new yuyu::LogEvent(logger, level, __FILE__, __LINE__, 0, yuyu::GetThreadId(), yuyu::GetFiberId(), time(0), yuyu::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
 
 /**
  * @brief 使用格式化方式将日志级别Debug的日志写入到logger
@@ -152,7 +152,7 @@ public:
      * @brief 日志级别转文本
      * @param[in] str 日志级别文本
      */
-    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time);
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int32_t line, uint32_t elapse, uint32_t thread_id, uint32_t fiber_id, uint64_t time, const std::string& thread_name);
 
     /**
      * @brief 日志级别转文本
