@@ -62,6 +62,7 @@ set(LIB_SRC
     yuyu/config.cc
     yuyu/thread.cc
     yuyu/fiber.cc
+    yuyu/scheduler.cc
     )
 
  set(LIBS

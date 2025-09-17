@@ -3,6 +3,8 @@
 
 #include "fiber.h"
 #include "thread.h"
+#include "macro.h"
+#include <list>
 
 namespace yuyu {
 
@@ -49,6 +51,28 @@ public:
         }
     }
 
+    void switchTo(int thread = -1);
+    std::ostream& dump(std::ostream& os);
+
+protected:
+    virtual void tickle();
+    void run();
+    virtual bool stopping();
+    virtual void idle();
+    void setThis();
+    bool hasIdleThreads() { return m_idleThreadCount > 0; }
+
+private:
+    template<class FiberOrCb>
+    bool scheduleNoLock(FiberOrCb fc, int thread) {
+        bool need_tickle = m_fibers.empty();
+        FiberAndThread ft(fc, thread);
+        if (ft.fiber || ft.cb) {
+            m_fibers.push_back(ft);
+        }
+        return need_tickle;
+    }
+
 private:
     struct FiberAndThread {
         Fiber::ptr fiber;
@@ -87,6 +111,15 @@ private:
     std::list<FiberAndThread> m_fibers;
     Fiber::ptr m_rootFiber;
     std::string m_name;
+
+protected:
+    std::vector<int> m_threadIds;
+    size_t m_threadCount = 0;
+    size_t m_activeThreadCount = 0;
+    size_t m_idleThreadCount = 0;
+    bool m_stopping = true;
+    bool m_autoStop = false;
+    int m_rootThread = 0;
 };
 } // namespace end
 

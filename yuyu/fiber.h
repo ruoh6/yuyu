@@ -18,13 +18,13 @@ public:
         EXEC,
         TERM,
         READY,
-        EXCPT
+        EXCEPT
     };
 
 private:
     Fiber();
 public:
-    Fiber(std::function<void()> cb, size_t stacksize = 0);
+    Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
     ~Fiber();
 
     // 重置协程函数，，并重置协程状态
@@ -33,8 +33,11 @@ public:
     void swapIn();
     // 切换到后台执行
     void swapOut();
+    void call();
 
     uint64_t getId() const { return m_id; }
+    void setState(const State state) { m_state = state; }
+    State getState() const { return m_state; }
 public:
     // 设置当前协程
     void SetThis(Fiber* f);

@@ -38,7 +38,7 @@ Fiber::Fiber() {
     YUYU_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
 
-Fiber::Fiber(std::function<void()> cb, size_t stacksize) 
+Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller) 
     : m_id(++s_fiber_id)
     , m_cb(cb) {
     ++s_fiber_count;
@@ -62,7 +62,7 @@ Fiber::~Fiber() {
     --s_fiber_count;
     if (m_stack) {
         YUYU_ASSERT(m_state == INIT 
-                || m_state == EXCPT
+                || m_state == EXCEPT
                 || m_state == TERM);
         StackAllocator::Dealloc(m_stack, m_stacksize);
     } else { 
@@ -82,7 +82,7 @@ Fiber::~Fiber() {
 void Fiber::reset(std::function<void()> cb) {
     YUYU_ASSERT(m_stack);
     YUYU_ASSERT(m_state == INIT
-            || m_state == EXCPT
+            || m_state == EXCEPT
             || m_state == TERM);
     m_cb = cb;
 
@@ -116,6 +116,9 @@ void Fiber::swapOut() {
     if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
         YUYU_ASSERT2(false, "swapcontext");
     }
+}
+
+void Fiber::call() {
 }
 
 void Fiber::SetThis(Fiber* f) {
@@ -161,10 +164,10 @@ void Fiber::MainFunc() {
         cur->m_cb = nullptr;
         cur->m_state = TERM;
     } catch(std::exception& ex){
-        cur->m_state = EXCPT;
+        cur->m_state = EXCEPT;
         YUYU_LOG_ERROR(g_logger) << "Fiber Execption: " << ex.what();
     } catch(...) {
-        cur->m_state = EXCPT;
+        cur->m_state = EXCEPT;
         YUYU_LOG_ERROR(g_logger) << "Fiber Execption";
     }
 
