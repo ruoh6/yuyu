@@ -1,10 +1,13 @@
 #ifndef __YUYU_SCHEDULER_H__
 #define __YUYU_SCHEDULER_H__
 
+#include <list>
+#include <iostream>
+#include <memory>
 #include "fiber.h"
 #include "thread.h"
 #include "macro.h"
-#include <list>
+#include "noncopyable.h"
 
 namespace yuyu {
 
@@ -121,6 +124,16 @@ protected:
     bool m_autoStop = false;
     int m_rootThread = 0;
 };
+
+class SchedulerSwitcher : public Noncopyable
+{
+public:
+    SchedulerSwitcher(Scheduler* target = nullptr);
+    ~SchedulerSwitcher();
+private:
+    Scheduler* m_caller;
+};
+
 } // namespace end
 
 #endif

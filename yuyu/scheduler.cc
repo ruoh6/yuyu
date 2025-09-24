@@ -60,6 +60,11 @@ void Scheduler::start() {
         m_threadIds.push_back(m_threads[i]->getId());
     }
     lock.unlock();
+    // TODO
+    //if (m_rootFiber) {
+    //    m_rootFiber->call();
+    //    YUYU_LOG_INFO(g_logger) << "call out " << m_rootFiber;
+    //}
 }
 void Scheduler::stop() {
     m_autoStop = true;
@@ -217,13 +222,61 @@ void Scheduler::run() {
 }
 
 void Scheduler::tickle() {
+    YUYU_LOG_INFO(g_logger) << "tickle";
 }
 
 bool Scheduler::stopping() {
-    return false;
+    MutexType::Lock lock(m_mutex);
+    return m_autoStop && m_stopping
+        && m_fibers.empty() && m_activeThreadCount == 0;
 }
 
 void Scheduler::idle() {
+    YUYU_LOG_INFO(g_logger) << "idle";
+    while(!stopping()) {
+        yuyu::Fiber::YieldToHold();
+    }
+}
+
+void Scheduler::switchTo(int thread) {
+    YUYU_ASSERT(Scheduler::GetThis() != nullptr);
+    if (Scheduler::GetThis() == this) {
+        if (thread == -1 || thread == yuyu::GetThreadId()) {
+            return;
+        }
+    }
+    schedule(Fiber::GetThis(), thread);
+    Fiber::YieldToHold();
+}
+
+std::ostream& Scheduler::dump(std::ostream& os) {
+    os << "[Scheduler name=" << m_name
+       << " size=" << m_threadCount
+       << " active_count=" << m_activeThreadCount
+       << " idle_count=" << m_idleThreadCount
+       << " stopping=" << m_stopping
+       << " ]" << std::endl << "   ";
+
+    for (size_t i = 0; i < m_threadIds.size(); ++i) {
+        if (i) {
+            os << ", ";
+        }
+        os << m_threadIds[i];
+    }
+    return os;
+} 
+
+SchedulerSwitcher::SchedulerSwitcher(Scheduler* target) {
+    m_caller = Scheduler::GetThis();
+    if (target) {
+        target->switchTo();
+    }
+}
+
+SchedulerSwitcher::~SchedulerSwitcher() {
+    if (m_caller) {
+        m_caller->switchTo();
+    }
 }
 
 } // namespace end

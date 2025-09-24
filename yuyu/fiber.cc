@@ -1,6 +1,7 @@
 #include "fiber.h"
 #include "config.h"
 #include "macro.h"
+#include "scheduler.h"
 #include <atomic>
 
 namespace yuyu {
@@ -53,7 +54,11 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
 
-    makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    if (!use_caller) {
+        makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    } else {
+        makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
+    }
 
     YUYU_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
@@ -104,21 +109,34 @@ void Fiber::swapIn() {
     YUYU_ASSERT(m_state != EXEC);
 
     m_state = EXEC;
-    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+    if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
         YUYU_ASSERT2(false, "swapcontext");
     }
 }
 
 // 切换到后台执行
 void Fiber::swapOut() {
-    SetThis(t_threadFiber.get());
+    SetThis(Scheduler::GetMainFiber());
 
-    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+    if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
         YUYU_ASSERT2(false, "swapcontext");
     }
 }
 
 void Fiber::call() {
+    SetThis(this);
+    m_state = EXEC;
+    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+        YUYU_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::back() {
+    SetThis(t_threadFiber.get());
+    YUYU_LOG_INFO(g_logger) << "called back func";
+    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx) == -1) {
+        YUYU_ASSERT2(false, "swapcontext");
+    }
 }
 
 void Fiber::SetThis(Fiber* f) {
@@ -165,10 +183,14 @@ void Fiber::MainFunc() {
         cur->m_state = TERM;
     } catch(std::exception& ex){
         cur->m_state = EXCEPT;
-        YUYU_LOG_ERROR(g_logger) << "Fiber Execption: " << ex.what();
+        YUYU_LOG_ERROR(g_logger) << "Fiber Execption: " << ex.what()
+                << std::endl
+                << yuyu::BacktraceToString();
     } catch(...) {
         cur->m_state = EXCEPT;
-        YUYU_LOG_ERROR(g_logger) << "Fiber Execption";
+        YUYU_LOG_ERROR(g_logger) << "Fiber Execption"
+                << std::endl
+                << yuyu::BacktraceToString();
     }
 
     auto raw_ptr = cur.get();
@@ -178,6 +200,32 @@ void Fiber::MainFunc() {
     YUYU_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
+void Fiber::CallerMainFunc() {
+    Fiber::ptr cur = GetThis();
+    YUYU_ASSERT(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception& ex) {
+        cur->m_state = EXCEPT;
+        YUYU_LOG_ERROR(g_logger) << "Fiber Except: " << ex.what()
+            << " fiber_id=" << cur->getId()
+            << std::endl
+            << yuyu::BacktraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        YUYU_LOG_ERROR(g_logger) << "Fiber Except: "
+            << " fiber_id=" << cur->getId()
+            << std::endl
+            << yuyu::BacktraceToString();
+    }
+
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->back();
+    YUYU_ASSERT2(false, "never reach fiber_id="+std::to_string(raw_ptr->getId()));
+}
 
 uint64_t Fiber::GetFiberId() {
     if (t_fiber) {

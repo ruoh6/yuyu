@@ -34,6 +34,7 @@ public:
     // 切换到后台执行
     void swapOut();
     void call();
+    void back();
 
     uint64_t getId() const { return m_id; }
     void setState(const State state) { m_state = state; }
@@ -51,6 +52,7 @@ public:
     static uint64_t TotalFibers();
 
     static void MainFunc();
+    static void CallerMainFunc();
     static uint64_t GetFiberId();
 private:
     uint64_t m_id = 0;
