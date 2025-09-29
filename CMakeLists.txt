@@ -63,6 +63,7 @@ set(LIB_SRC
     yuyu/thread.cc
     yuyu/fiber.cc
     yuyu/scheduler.cc
+    yuyu/iomanager.cc
     )
 
  set(LIBS
@@ -89,6 +90,7 @@ yuyu_add_executable(test_thread "tests/test_thread.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_util "tests/test_util.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_fiber "tests/test_fiber.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_scheduler "tests/test_scheduler.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_iomanager "tests/test_iomanager.cc" yuyu "${LIBS}")
 #add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
 #add_dependencies(test_log yuyu)
 #target_link_libraries(test_log yuyu)

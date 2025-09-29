@@ -4,3 +4,9 @@
   1)线程池，分配一组线程
   2)协程调度器，将协程，指定到相应的线程上
 2、IO协程调度模块
+
+3. IOManager(Epoll) --> Scheduler
+        |
+        |
+        V
+      idle(epoll_wait)
