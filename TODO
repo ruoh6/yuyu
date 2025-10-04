@@ -10,3 +10,6 @@
         |
         V
       idle(epoll_wait)
+4. Timer --> addTimer() --> cancel()
+    Get the time difference between the current timer and now.
+    return which need trigger timer

@@ -54,6 +54,18 @@ void Backtrace(std::vector<std::string>& bt, int size, int skip) {
     free(array);
 }
 
+uint64_t GetCurrentMS() {
+    struct timeval tv;    
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000ul + tv.tv_usec / 1000;
+}
+
+uint64_t GetCurrentUS() {
+    struct timeval tv;    
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000ul * 1000 + tv.tv_usec;
+}
+
 static int __lstat(const char* file, struct stat* st = nullptr) {
     struct stat lst;
     int ret = lstat(file, &lst);

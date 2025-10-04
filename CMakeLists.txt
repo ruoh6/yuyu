@@ -64,6 +64,7 @@ set(LIB_SRC
     yuyu/fiber.cc
     yuyu/scheduler.cc
     yuyu/iomanager.cc
+    yuyu/timer.cc
     )
 
  set(LIBS
