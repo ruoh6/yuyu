@@ -9,11 +9,19 @@ bool Timer::Comparator::operator() (const Timer::ptr& lhs, const Timer::ptr& rhs
     if (!lhs && !rhs) {
         return false;
     }    
-    if (!lhs) return true;
-    if (!rhs) return false;
+    if (!lhs) {
+        return true;
+    }
+    if (!rhs) {
+        return false;
+    }
     
-    if (lhs->m_next < rhs->m_next) return true;
-    if (lhs->m_next > rhs->m_next) return false;
+    if (lhs->m_next < rhs->m_next) {
+        return true;
+    }
+    if (lhs->m_next > rhs->m_next) {
+        return false;
+    }
 
     return lhs.get() < rhs.get();
 }
@@ -24,6 +32,7 @@ Timer::Timer(uint64_t ms, std::function<void()> cb,
       m_cb(cb),
       m_recurring(recurring),
       m_manager(manager) {
+    m_next = yuyu::GetCurrentMS() + m_ms;
 }
 
 Timer::Timer(uint64_t next) 
@@ -91,6 +100,20 @@ Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb
     RWMutexType::WriteLock lock(m_mutex);
     addTimer(timer, lock);
     return timer;
+}
+
+static void OnTimer(std::weak_ptr<void> weak_cond, std::function<void()> cb) {
+    std::shared_ptr<void> tmp = weak_cond.lock();
+    if (tmp) {
+        cb();
+    }
+}
+
+Timer::ptr TimerManager::addConditionTimer(uint64_t ms
+                , std::function<void()> cb
+                , std::weak_ptr<void> weak_cond
+                , bool recurring ) {
+    return addTimer(ms, std::bind(&OnTimer, weak_cond, cb), recurring);
 }
 
 uint64_t TimerManager::getNextTimer() {

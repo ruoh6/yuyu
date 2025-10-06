@@ -1,5 +1,6 @@
 #include "scheduler.h"
 #include "log.h"
+#include "hook.h"
 
 namespace yuyu {
 static yuyu::Logger::ptr g_logger = YUYU_LOG_NAME("system");
@@ -128,6 +129,7 @@ void Scheduler::setThis() {
 void Scheduler::run() {
     YUYU_LOG_DEBUG(g_logger) << m_name << " run";
     setThis();
+    set_hook_enable(true);
     if (yuyu::GetThreadId() != m_rootThread) {
         t_scheduler_fiber = Fiber::GetThis().get();
     }
