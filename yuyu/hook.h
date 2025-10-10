@@ -67,5 +67,7 @@ typedef int (*close_fun)(int fd);
 extern close_fun close_f;
 
 // control
+typedef int (*fcntl_fun)(int fd, int cmd, ... /* arg */ );
+extern fcntl_fun fcntl_f;
 }
 #endif

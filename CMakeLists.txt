@@ -66,6 +66,7 @@ set(LIB_SRC
     yuyu/iomanager.cc
     yuyu/timer.cc
     yuyu/hook.cc
+    yuyu/fd_manager.cc
     )
 
  set(LIBS
