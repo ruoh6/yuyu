@@ -119,6 +119,7 @@ private:
     T& m_mutex;
     bool m_locked;
 };
+
 class Mutex {
 public:
     typedef ScopedLockImpl<Mutex> Lock;

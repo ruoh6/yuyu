@@ -15,12 +15,26 @@ namespace yuyu {
 static thread_local bool t_hook_enable = false;
 
 #define HOOK_FUN(XX) \
-    XX(sleep)   \
-    XX(usleep)  \
+    XX(sleep)       \
+    XX(usleep)      \
     XX(nanosleep)   \
     XX(socket)      \
     XX(connect)     \
     XX(accept)      \
+    XX(read)        \
+    XX(readv)       \
+    XX(recv)        \
+    XX(recvfrom)    \
+    XX(recvmsg)     \
+    XX(write)       \
+    XX(writev)      \
+    XX(send)        \
+    XX(sendto)      \
+    XX(sendmsg)     \
+    XX(close)       \
+    XX(ioctl)       \
+    XX(getsockopt)  \
+    XX(setsockopt)  \
     XX(fcntl)
 
 void hook_init() {
@@ -32,6 +46,8 @@ void hook_init() {
     HOOK_FUN(XX);
 #undef XX
 }
+
+static uint64_t s_connect_timeout = -1;
 struct _HookIniter {
     _HookIniter() {
         hook_init();
@@ -48,6 +64,80 @@ void set_hook_enable(bool flag) {
 
 } // namespace end
 
+struct timer_info {
+    int cancelled = 0;
+};
+
+template<typename OriginFun, typename... Args>
+static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name
+        , uint32_t event, int timeout_so, Args&&... args) {
+    if (!yuyu::t_hook_enable) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+
+    yuyu::FdCtx::ptr ctx = yuyu::FdMgr::GetInstance()->get(fd);
+    if (!ctx) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+
+    if (ctx->isClose()) {
+        // bad descripton file
+        errno = EBADF;   
+        return -1;
+    }
+
+    if (!ctx->isSocket() || ctx->getUserNonblock()) {
+        return fun(fd, std::forward<Args>(args)...);
+    }
+
+    uint64_t to = ctx->getTimeout(timeout_so);
+    std::shared_ptr<timer_info> tinfo(new timer_info);
+
+retry:
+    ssize_t n = fun(fd, std::forward<Args>(args)...);
+    while(n == -1 && errno == EINTR) {
+        n = fun(fd, std::forward<Args>(args)...);
+    }
+
+    if (n == -1 && errno == EAGAIN) {
+        yuyu::IOManager* iom = yuyu::IOManager::GetThis();
+        yuyu::Timer::ptr timer;
+        std::weak_ptr<timer_info> winfo(tinfo);
+
+        if (to != (uint64_t)-1) {
+            timer = iom->addConditionTimer(to, [winfo, fd, iom, event]() {
+                auto t = winfo.lock();
+                if (!t || t->cancelled) {
+                    return;
+                }
+                t->cancelled = ETIMEDOUT;
+                iom->cancelEvent(fd, (yuyu::IOManager::Event)(event));
+            }, winfo);
+        }
+
+        int rt = iom->addEvent(fd, (yuyu::IOManager::Event)(event));
+        if (YUYU_UNLIKELY(rt)) {
+            YUYU_LOG_ERROR(g_logger) << hook_fun_name << " addEvent("
+                << fd << ", " << event << ")";
+            if (timer) {
+                timer->cancel();
+            }
+            return -1;
+        } else {
+            yuyu::Fiber::YieldToHold();
+            if (timer) {
+                timer->cancel();
+            }
+            if (tinfo->cancelled) {
+                errno = tinfo->cancelled;
+                return -1;
+            }
+            goto retry;
+        }
+    }
+
+    return n;
+}
 
 extern "C" {
 #define XX(name) name ## _fun name ## _f = nullptr;
@@ -108,15 +198,151 @@ int socket(int domain, int type, int protocol) {
         return fd;
     }
     // fd manager process
-    return 0;
+    yuyu::FdMgr::GetInstance()->get(fd, true);
+    return fd;
+}
+
+int connect_with_timeout(int fd, const struct sockaddr* addr
+        , socklen_t addrlen, uint64_t timeout_ms) {
+    if (!yuyu::t_hook_enable) {
+        return connect_f(fd, addr, addrlen);
+    }
+    yuyu::FdCtx::ptr ctx = yuyu::FdMgr::GetInstance()->get(fd);
+    if (!ctx || ctx->isClose()) {
+        errno = EBADF;
+        return -1;
+    }
+
+    if (!ctx->isSocket()) {
+        return connect_f(fd, addr, addrlen);
+    }
+
+    if (ctx->getUserNonblock()) {
+        return connect_f(fd, addr, addrlen);
+    }
+
+    int n = connect_f(fd, addr, addrlen);
+    if (n == 0) {
+        return 0;
+    } else if (n != -1 || errno != EINPROGRESS) {
+        return n;
+    }
+
+    yuyu::IOManager* iom = yuyu::IOManager::GetThis();
+    yuyu::Timer::ptr timer;
+    std::shared_ptr<timer_info> tinfo(new timer_info);
+    std::weak_ptr<timer_info> winfo(tinfo);
+
+    if (timeout_ms != (uint64_t)-1) {
+        timer = iom->addConditionTimer(timeout_ms, [winfo, fd, iom]() {
+            auto t = winfo.lock();
+            if (!t || t->cancelled) {
+                return;
+            }
+            t->cancelled = ETIMEDOUT;
+            iom->cancelEvent(fd, yuyu::IOManager::WRITE);
+        }, winfo);
+    }
+
+    int rt = iom->addEvent(fd, yuyu::IOManager::WRITE);
+    if (rt == 0) {
+        yuyu::Fiber::YieldToHold();
+        if (timer) {
+            timer->cancel();
+        }
+        if (tinfo->cancelled) {
+            errno = tinfo->cancelled;
+            return -1;
+        }
+    } else {
+        if (timer) {
+            timer->cancel();
+        }
+        YUYU_LOG_ERROR(g_logger) << "connect addEvent(" << fd << ", WRITE) error";
+    }
+
+    int error = 0;
+    socklen_t len = sizeof(int);
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
+        return -1;
+    }
+    if (!error) {
+        return 0;
+    } else {
+        errno = error;
+        return -1;
+    }
 }
 
 int connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
-    return 0;
+    return connect_with_timeout(sockfd, addr, addrlen, yuyu::s_connect_timeout);
 }
 
 int accept(int s, struct sockaddr* addr, socklen_t* addrlen) {
-    return 0;
+    int fd = do_io(s, accept_f, "accept", yuyu::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
+    if (fd >= 0) {
+        yuyu::FdMgr::GetInstance()->get(fd, true);
+    }
+    return fd;
+}
+
+ssize_t read(int fd, void* buf, size_t count) {
+    return do_io(fd, read_f, "read", yuyu::IOManager::READ, SO_RCVTIMEO, buf, count);
+}
+
+size_t readv(int fd, const struct iovec* iov, int iovcnt) {
+    return do_io(fd, readv_f, "readv", yuyu::IOManager::READ, SO_RCVTIMEO, iov, iovcnt);
+}
+
+ssize_t recv(int sockfd, void* buf, size_t len, int flags) {
+    return do_io(sockfd, recv_f, "recv", yuyu::IOManager::READ, SO_RCVTIMEO, buf, len, flags);
+}
+
+ssize_t recvfrom(int sockfd, void* buf, size_t len
+        , int flags, struct sockaddr* src_addr, socklen_t* addrlen) {
+    return do_io(sockfd, recvfrom_f, "recvfrom", yuyu::IOManager::READ, SO_RCVTIMEO, buf, len, flags, src_addr, addrlen);
+}
+
+ssize_t recvmsg(int sockfd, struct msghdr* msg, int flags) {
+    return do_io(sockfd, recvmsg_f, "recvmsg", yuyu::IOManager::READ, SO_RCVTIMEO, msg, flags);
+}
+
+// write
+ssize_t write(int fd, const void* buf, size_t count) {
+    return do_io(fd, write_f, "write", yuyu::IOManager::WRITE, SO_RCVTIMEO, buf, count);
+}
+
+ssize_t writev(int fd, const struct iovec* iov, int iovcnt) {
+    return do_io(fd, writev_f, "writev", yuyu::IOManager::WRITE, SO_RCVTIMEO, iov, iovcnt);
+}
+
+ssize_t send(int s, const void* msg, size_t len, int flags) {
+    return do_io(s, send_f, "send", yuyu::IOManager::WRITE, SO_RCVTIMEO, msg, len, flags);
+}
+
+ssize_t sendto(int s, const void* msg, size_t len, int flags
+, const struct sockaddr* to, socklen_t tolen) {
+    return do_io(s, sendto_f, "sendto", yuyu::IOManager::WRITE, SO_RCVTIMEO, msg, len, flags, to, tolen);
+}
+
+ssize_t sendmsg(int s, const struct msghdr* msg, int flags) {
+    return do_io(s, sendmsg_f, "sendmsg", yuyu::IOManager::WRITE, SO_RCVTIMEO, msg, flags);
+}
+
+int close(int fd) {
+    if (!yuyu::t_hook_enable) {
+        return close_f(fd);
+    }
+
+    yuyu::FdCtx::ptr ctx = yuyu::FdMgr::GetInstance()->get(fd);
+    if (ctx) {
+        auto iom = yuyu::IOManager::GetThis();
+        if (iom) {
+            iom->cancelAll(fd);
+        }
+        yuyu::FdMgr::GetInstance()->del(fd);
+    }
+    return close_f(fd);
 }
 
 // control
@@ -206,4 +432,43 @@ int fcntl(int fd, int cmd, ... /* arg */ ) {
             return fcntl_f(fd, cmd);
     } 
 }
+
+int ioctl(int d, unsigned long int request, ...) {
+    va_list va;
+    va_start(va, request);
+    void* arg = va_arg(va, void*);
+    va_end(va);
+
+    if (FIONBIO == request) {
+        bool user_nonblock = !!*(int*)arg;
+        yuyu::FdCtx::ptr ctx = yuyu::FdMgr::GetInstance()->get(d);
+        if (!ctx || ctx->isClose() || !ctx->isSocket()) {
+            return ioctl_f(d, request, arg);
+        }
+        ctx->setUserNonblock(user_nonblock);
+    }
+    return ioctl_f(d, request, arg);
+}
+
+int getsockopt(int sockfd, int level, int optname, void* optval, socklen_t* optlen) {
+    return getsockopt_f(sockfd, level, optname, optval, optlen);
+}
+
+int setsockopt(int sockfd, int level, int optname, const void* optval, socklen_t optlen) {
+    if (!yuyu::t_hook_enable) {
+        return setsockopt_f(sockfd, level, optname, optval, optlen);
+    }
+    if (level == SOL_SOCKET) {
+        if (optname == SO_RCVTIMEO || optname == SO_SNDTIMEO) {
+            yuyu::FdCtx::ptr ctx = yuyu::FdMgr::GetInstance()->get(sockfd);
+            if (ctx) {
+                const timeval* v = (const timeval*)optval;
+                ctx->setTimeout(optname, v->tv_sec * 1000 + v->tv_usec / 1000);
+            }
+        }
+    }
+
+    return setsockopt_f(sockfd, level, optname, optval, optlen);
+}
+
 } // extern "C" end

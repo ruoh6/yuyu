@@ -27,6 +27,7 @@ public:
 
 using StackAllocator = MallocStackAllocator;
 
+// Main Fiber
 Fiber::Fiber() {
     m_state = EXEC;
     SetThis(this);
@@ -39,6 +40,7 @@ Fiber::Fiber() {
     YUYU_LOG_DEBUG(g_logger) << "Fiber::Fiber main";
 }
 
+// Task Fiber
 Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller) 
     : m_id(++s_fiber_id)
     , m_cb(cb) {
