@@ -42,6 +42,8 @@ void hook_init() {
     if (is_inited) {
         return;
     }
+// sleep_f = (sleep_fun)dlsym(RTLD_NEXT, "sleep");
+// sleep_fun is function pointer
 #define XX(name) name ## _f = (name ## _fun)dlsym(RTLD_NEXT, #name);
     HOOK_FUN(XX);
 #undef XX
@@ -53,6 +55,7 @@ struct _HookIniter {
         hook_init();
     }
 };
+// Initialize the hook before main is called.
 static _HookIniter s_hook_initer;
 
 bool is_hook_enable() {
