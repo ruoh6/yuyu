@@ -57,6 +57,7 @@ link_directories(/usr/local/lib)
      include_directories(${YAMLCPP_INCLUDE_DIRS})
  endif()
 set(LIB_SRC
+    yuyu/address.cc
     yuyu/log.cc
     yuyu/util.cc
     yuyu/config.cc
@@ -95,6 +96,7 @@ yuyu_add_executable(test_fiber "tests/test_fiber.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_scheduler "tests/test_scheduler.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_iomanager "tests/test_iomanager.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_hook "tests/test_hook.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_address "tests/test_address.cc" yuyu "${LIBS}")
 #add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
 #add_dependencies(test_log yuyu)
 #target_link_libraries(test_log yuyu)

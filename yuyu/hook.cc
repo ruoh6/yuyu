@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 
+#include "config.h"
 #include "log.h"
 #include "fiber.h"
 #include "iomanager.h"
@@ -13,6 +14,9 @@ yuyu::Logger::ptr g_logger = YUYU_LOG_NAME("system");
 namespace yuyu {
 
 static thread_local bool t_hook_enable = false;
+
+static yuyu::ConfigVar<int>::ptr g_tcp_connect_timeout = 
+    yuyu::Config::Lookup("tcp.connect.timeout", 5000, "tcp connect timeout");
 
 #define HOOK_FUN(XX) \
     XX(sleep)       \
@@ -53,6 +57,12 @@ static uint64_t s_connect_timeout = -1;
 struct _HookIniter {
     _HookIniter() {
         hook_init();
+        s_connect_timeout = g_tcp_connect_timeout->getValue();
+        g_tcp_connect_timeout->addListener([](const int& old_value, const int& new_value){
+            YUYU_LOG_INFO(g_logger) << "tcp connect timeout changed from "
+                                    << old_value << " to " << new_value;
+            s_connect_timeout = new_value;
+        });
     }
 };
 // Initialize the hook before main is called.
@@ -127,7 +137,9 @@ retry:
             }
             return -1;
         } else {
+            YUYU_LOG_DEBUG(g_logger) << "do_io name=<" << hook_fun_name << ">";
             yuyu::Fiber::YieldToHold();
+            YUYU_LOG_DEBUG(g_logger) << "do_io name=<" << hook_fun_name << ">";
             if (timer) {
                 timer->cancel();
             }
