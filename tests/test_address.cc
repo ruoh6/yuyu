@@ -7,7 +7,8 @@ void test() {
     std::vector<yuyu::Address::ptr> addrs;
 
     YUYU_LOG_INFO(g_logger) << "begin";
-    bool v = yuyu::Address::Lookup(addrs, "localhost:3080");
+    //bool v = yuyu::Address::Lookup(addrs, "localhost:3080");
+    bool v = yuyu::Address::Lookup(addrs, "www.baidu.com:ftp");
     YUYU_LOG_INFO(g_logger) << "end";
     if (!v) {
         YUYU_LOG_ERROR(g_logger) << "lookup fail";

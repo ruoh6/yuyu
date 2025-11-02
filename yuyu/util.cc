@@ -1,5 +1,7 @@
 #include "util.h"
 #include "fiber.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 namespace yuyu {
 
@@ -129,6 +131,13 @@ bool FSUtil::Mkdir(const std::string& dirname) {
     } while(0);
     free(path);
     return false;
+}
+
+bool FSUtil::Unlink(const std::string& filename, bool exist) {
+    if(!exist && __lstat(filename.c_str())) {
+        return true;
+    }
+    return ::unlink(filename.c_str()) == 0;
 }
 
 bool FSUtil::OpenForWrite(std::ofstream& ofs, const std::string& filename, std::ios_base::openmode mode) {

@@ -37,6 +37,7 @@ public:
     static std::string Dirname(const std::string& filename);
     static bool Mkdir(const std::string& dirname);
     static bool OpenForWrite(std::ofstream& ofs, const std::string& file_name, std::ios_base::openmode mode);
+    static bool Unlink(const std::string& filename, bool exist = false);
 };
 
 template<class T>

@@ -1,3 +1,7 @@
 [submodule "thirdpart/hiredis-vip"]
 	path = thirdpart/hiredis-vip
 	url = https://github.com/vipshop/hiredis-vip.git
+[submodule "thirdpart/openssl-1.0.1"]
+	path = thirdpart/openssl-1.0.1
+	url = https://github.com/openssl/openssl.git
+	branch = OpenSSL_1_0_1-stable
