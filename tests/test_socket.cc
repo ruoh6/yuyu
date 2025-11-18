@@ -15,7 +15,7 @@ void test_socket() {
     //        break;
     //    }
     //}
-    yuyu::IPAddress::ptr addr = yuyu::Address::LookupAnyIPAddress("www.sylar.top");
+    yuyu::IPAddress::ptr addr = yuyu::Address::LookupAnyIPAddress("www.baidu.com");
     if(addr) {
         YUYU_LOG_INFO(g_looger) << "get address: " << addr->toString();
     } else {

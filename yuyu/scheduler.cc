@@ -129,7 +129,7 @@ void Scheduler::setThis() {
 void Scheduler::run() {
     YUYU_LOG_DEBUG(g_logger) << m_name << " run";
     setThis();
-    set_hook_enable(true);
+    //set_hook_enable(true);
     if (yuyu::GetThreadId() != m_rootThread) {
         t_scheduler_fiber = Fiber::GetThis().get();
     }
