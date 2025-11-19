@@ -15,3 +15,7 @@
     return which need trigger timer
 
 5. Add a folder which storage scripts that can set environment and manager submodule.
+
+6. Add ByteArray Class.
+
+7. Add Tcp Server Class.
