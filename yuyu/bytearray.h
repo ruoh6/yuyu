@@ -101,7 +101,7 @@ public:
 
     uint64_t getReadBuffers(std::vector<iovec>& buffers, uint64_t len = ~0ull) const;
     uint64_t getReadBuffers(std::vector<iovec>& buffers, uint64_t len, uint64_t position) const;
-    uint64_t getWriteBuffes(std::vector<iovec>& buffers, uint64_t len);
+    uint64_t getWriteBuffers(std::vector<iovec>& buffers, uint64_t len);
     size_t getSize() const { return m_size; }
 
 private:

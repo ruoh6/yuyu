@@ -70,6 +70,8 @@ set(LIB_SRC
     yuyu/fiber.cc
     yuyu/fd_manager.cc
     yuyu/socket.cc
+    yuyu/stream.cc
+    yuyu/streams/socket_stream.cc
     yuyu/scheduler.cc
     )
 

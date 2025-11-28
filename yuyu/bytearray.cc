@@ -615,7 +615,7 @@ uint64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers, uint64_t len, ui
     return size;
 }
 
-uint64_t ByteArray::getWriteBuffes(std::vector<iovec>& buffers, uint64_t len) {
+uint64_t ByteArray::getWriteBuffers(std::vector<iovec>& buffers, uint64_t len) {
     if(len == 0) {
         return 0;
     }
