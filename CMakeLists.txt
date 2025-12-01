@@ -61,6 +61,8 @@ set(LIB_SRC
     yuyu/bytearray.cc
     yuyu/config.cc
     yuyu/hook.cc
+    yuyu/http/http.cc
+    yuyu/http/http_parser.cc
     yuyu/log.cc
     yuyu/util.cc
     yuyu/tcp_server.cc
@@ -74,6 +76,10 @@ set(LIB_SRC
     yuyu/streams/socket_stream.cc
     yuyu/scheduler.cc
     )
+
+ragelmaker(yuyu/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu/http)
+ragelmaker(yuyu/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu/http)
+#ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 
  set(LIBS
      yuyu
@@ -107,6 +113,8 @@ yuyu_add_executable(test_address "tests/test_address.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_socket "tests/test_socket.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_bytearray "tests/test_bytearray.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_tcp_server "tests/test_tcp_server.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_http "tests/test_http.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_http_parser "tests/test_http_parser.cc" yuyu "${LIBS}")
 #add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
 #add_dependencies(test_log yuyu)
 #target_link_libraries(test_log yuyu)
