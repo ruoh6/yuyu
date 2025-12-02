@@ -63,6 +63,9 @@ set(LIB_SRC
     yuyu/hook.cc
     yuyu/http/http.cc
     yuyu/http/http_parser.cc
+    yuyu/http/http_session.cc
+    yuyu/http/http_server.cc
+    yuyu/http/servlet.cc
     yuyu/log.cc
     yuyu/util.cc
     yuyu/tcp_server.cc
@@ -115,6 +118,7 @@ yuyu_add_executable(test_bytearray "tests/test_bytearray.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_tcp_server "tests/test_tcp_server.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http "tests/test_http.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http_parser "tests/test_http_parser.cc" yuyu "${LIBS}")
+yuyu_add_executable(test_http_server "tests/test_http_server.cc" yuyu "${LIBS}")
 #add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
 #add_dependencies(test_log yuyu)
 #target_link_libraries(test_log yuyu)
