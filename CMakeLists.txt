@@ -65,6 +65,7 @@ set(LIB_SRC
     yuyu/http/http_parser.cc
     yuyu/http/http_session.cc
     yuyu/http/http_server.cc
+    yuyu/http/http_connection.cc
     yuyu/http/servlet.cc
     yuyu/log.cc
     yuyu/util.cc
@@ -82,7 +83,7 @@ set(LIB_SRC
 
 ragelmaker(yuyu/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu/http)
 ragelmaker(yuyu/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu/http)
-#ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
+ragelmaker(yuyu/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu)
 
  set(LIBS
      yuyu
@@ -103,7 +104,6 @@ ragelmaker(yuyu/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yu
 
 add_library(yuyu SHARED ${LIB_SRC})
 
-
 yuyu_add_executable(test_log "tests/test_log.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_config "tests/test_config.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_thread "tests/test_thread.cc" yuyu "${LIBS}")
@@ -119,10 +119,4 @@ yuyu_add_executable(test_tcp_server "tests/test_tcp_server.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http "tests/test_http.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http_parser "tests/test_http_parser.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http_server "tests/test_http_server.cc" yuyu "${LIBS}")
-#add_executable(test_log ${PROJECT_SOURCE_DIR}/tests/test_log.cc)
-#add_dependencies(test_log yuyu)
-#target_link_libraries(test_log yuyu)
-
-#add_executable(test_config ${PROJECT_SOURCE_DIR}/tests/test_config.cc)
-#add_dependencies(test_config yuyu)
-#target_link_libraries(test_config yuyu ${YAMLCPP_LIBRARIES})
+yuyu_add_executable(test_http_connection "tests/test_http_connection.cc" yuyu "${LIBS}")
