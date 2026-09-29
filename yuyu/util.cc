@@ -1,5 +1,6 @@
 #include "util.h"
 #include "fiber.h"
+#include <algorithm>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>

@@ -1,10 +1,13 @@
 #include "fd_manager.h"
 #include "hook.h"
+#include "log.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 
 namespace yuyu {
+
+static yuyu::Logger::ptr g_logger = YUYU_LOG_NAME("system");
 
 FdCtx::FdCtx(int fd) 
     : m_isInit(false) 
@@ -40,7 +43,7 @@ bool FdCtx::init() {
     if (m_isSocket) {
         int flags = fcntl_f(m_fd, F_GETFL, 0);
         if (!(flags & O_NONBLOCK)) {
-            fcntl(m_fd, F_SETFL, flags | O_NONBLOCK);
+            fcntl_f(m_fd, F_SETFL, flags | O_NONBLOCK);
         }
         m_sysNonblock = true;
     } else {

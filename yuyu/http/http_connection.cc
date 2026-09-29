@@ -1,6 +1,7 @@
 #include "http_connection.h"
 #include "http_parser.h"
 #include "yuyu/log.h"
+#include "yuyu/streams/zlib_stream.h"
 
 namespace yuyu {
 namespace http {
@@ -134,17 +135,17 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         auto content_encoding = parser->getData()->getHeader("content-encoding");
         YUYU_LOG_DEBUG(g_logger) << "content_encoding: " << content_encoding
             << " size=" << body.size();
-        // if(strcasecmp(content_encoding.c_str(), "gzip") == 0) {
-        //     auto zs = ZlibStream::CreateGzip(false);
-        //     zs->write(body.c_str(), body.size());
-        //     zs->flush();
-        //     zs->getResult().swap(body);
-        // } else if(strcasecmp(content_encoding.c_str(), "deflate") == 0) {
-        //     auto zs = ZlibStream::CreateDeflate(false);
-        //     zs->write(body.c_str(), body.size());
-        //     zs->flush();
-        //     zs->getResult().swap(body);
-        // }
+        if(strcasecmp(content_encoding.c_str(), "gzip") == 0) {
+            auto zs = ZlibStream::CreateGzip(false);
+            zs->write(body.c_str(), body.size());
+            zs->flush();
+            zs->getResult().swap(body);
+        } else if(strcasecmp(content_encoding.c_str(), "deflate") == 0) {
+            auto zs = ZlibStream::CreateDeflate(false);
+            zs->write(body.c_str(), body.size());
+            zs->flush();
+            zs->getResult().swap(body);
+        }
         parser->getData()->setBody(body);
     }
     return parser->getData();

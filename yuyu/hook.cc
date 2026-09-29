@@ -295,8 +295,11 @@ int connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
 
 int accept(int s, struct sockaddr* addr, socklen_t* addrlen) {
     int fd = do_io(s, accept_f, "accept", yuyu::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
+    YUYU_LOG_INFO(g_logger) << "hooked accept: do_io returned fd=" << fd
+        << " errno=" << errno << " errstr=" << strerror(errno);
     if (fd >= 0) {
         yuyu::FdMgr::GetInstance()->get(fd, true);
+        YUYU_LOG_INFO(g_logger) << "hooked accept: fd=" << fd << " registered in FdManager";
     }
     return fd;
 }

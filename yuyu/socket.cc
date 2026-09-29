@@ -118,28 +118,42 @@ bool Socket::setOption(int level, int option, const void* result, socklen_t len)
 
 Socket::ptr Socket::accept() {
     Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
+    YUYU_LOG_INFO(g_logger) << "Socket::accept calling ::accept on fd=" << m_sock;
     int newsock = ::accept(m_sock, nullptr, nullptr);
+    YUYU_LOG_INFO(g_logger) << "Socket::accept ::accept returned fd=" << newsock
+        << " errno=" << errno << " errstr=" << strerror(errno);
     if(newsock == -1) {
         YUYU_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
             << errno << " errstr=" << strerror(errno);
         return nullptr;
     }
-    if(sock->init(newsock)) {
+    YUYU_LOG_INFO(g_logger) << "Socket::accept calling sock->init(" << newsock << ")";
+    bool init_ok = sock->init(newsock);
+    YUYU_LOG_INFO(g_logger) << "Socket::accept sock->init returned " << init_ok;
+    if(init_ok) {
         return sock;
     }
     return nullptr;
 }
 
 bool Socket::init(int sock) {
+    YUYU_LOG_INFO(g_logger) << "Socket::init sock=" << sock;
     FdCtx::ptr ctx = FdMgr::GetInstance()->get(sock);
+    YUYU_LOG_INFO(g_logger) << "Socket::init FdCtx=" << (ctx ? "found" : "null")
+        << " isSocket=" << (ctx ? ctx->isSocket() : false)
+        << " isClose=" << (ctx ? ctx->isClose() : false);
     if(ctx && ctx->isSocket() && !ctx->isClose()) {
         m_sock = sock;
         m_isConnected = true;
         initSock();
         getLocalAddress();
         getRemoteAddress();
+        YUYU_LOG_INFO(g_logger) << "Socket::init success, local="
+            << (m_localAddress ? m_localAddress->toString() : "null")
+            << " remote=" << (m_remoteAddress ? m_remoteAddress->toString() : "null");
         return true;
     }
+    YUYU_LOG_INFO(g_logger) << "Socket::init failed";
     return false;
 }
 

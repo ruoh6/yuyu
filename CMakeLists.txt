@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.14)
 project(yuyu)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
@@ -76,6 +77,7 @@ set(LIB_SRC
     yuyu/socket.cc
     yuyu/stream.cc
     yuyu/streams/socket_stream.cc
+    yuyu/streams/zlib_stream.cc
     yuyu/scheduler.cc
     )
 
@@ -90,6 +92,7 @@ ragelmaker(yuyu/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/yuyu)
      yaml-cpp
      ssl
      crypto
+     z
 #     jsoncpp
 #     event
 #     hiredis_vip
@@ -119,6 +122,7 @@ yuyu_add_executable(test_http "tests/test_http.cc" yuyu "${LIBS}")
 yuyu_add_executable(example_http_parser "example/example_http_parser.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http_server "tests/test_http_server.cc" yuyu "${LIBS}")
 yuyu_add_executable(test_http_connection "tests/test_http_connection.cc" yuyu "${LIBS}")
+yuyu_add_executable(example_echo_server "example/echo_server.cc" yuyu "${LIBS}")
 
 
 # Test

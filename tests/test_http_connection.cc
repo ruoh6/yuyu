@@ -3,7 +3,7 @@
 #include "yuyu/log.h"
 #include "yuyu/iomanager.h"
 #include "yuyu/http/http_parser.h"
-//#include "yuyu/streams/zlib_stream.h"
+#include "yuyu/streams/zlib_stream.h"
 #include <fstream>
 
 static yuyu::Logger::ptr g_logger = YUYU_LOG_ROOT();

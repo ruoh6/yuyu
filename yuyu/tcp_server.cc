@@ -132,11 +132,17 @@ void TcpServer::handleClient(Socket::ptr client) {
 
 void TcpServer::startAccept(Socket::ptr sock) {
     while(!m_isStop) {
+        YUYU_LOG_INFO(g_logger) << "startAccept: waiting for connection...";
         Socket::ptr client = sock->accept();
+        YUYU_LOG_INFO(g_logger) << "startAccept: accept returned client="
+            << (client ? client->toString() : "null");
         if (client) {
             client->setRecvTimeout(m_recvTimeout);
+            YUYU_LOG_INFO(g_logger) << "startAccept: scheduling handleClient on io_worker="
+                << (m_ioWorker ? m_ioWorker->getName() : "null");
             m_ioWorker->schedule(std::bind(&TcpServer::handleClient,
                         shared_from_this(), client));
+            YUYU_LOG_INFO(g_logger) << "startAccept: handleClient scheduled";
         } else {
             YUYU_LOG_ERROR(g_logger) << "accept errno=" << errno
                 << " errstr=" << strerror(errno);
