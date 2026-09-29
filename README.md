@@ -6,9 +6,9 @@
 > *How should I greet thee? With silence and tears.*
 > *— Lord Byron, "When We Two Parted"*
 
-> A high-performance C++ async server framework — userspace fibers + epoll-based IO scheduling + syscall hooks
-
-The goal of `yuyu` is simple: **write synchronous code, get asynchronous performance.**
+`yuyu` is a high-performance C++ async server framework built on **userspace fibers + epoll-based
+IO scheduling + syscall hooks**. The goal is simple: **write synchronous code, get asynchronous
+performance.**
 
 Every network IO call is intercepted by the hook layer. Whenever a call would block the
 thread, the scheduler switches to another fiber instead — the thread never sits idle.
